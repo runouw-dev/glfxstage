@@ -22,18 +22,7 @@ public abstract class GLFont extends GLObject {
      *
      * @since 15.06.11
      */
-    protected GLTexture texture;
-    private volatile boolean isInit = false;
-
-    /**
-     * Marks the GLFont object as being initialized. This should only be called
-     * by the init function.
-     *
-     * @since 15.06.11
-     */
-    protected final void markInitializedAfter() {
-        this.isInit = true;
-    }
+    protected GLTexture texture;        
 
     /**
      * Constructs a new GLFont object on the default OpenGL thread.
@@ -63,18 +52,7 @@ public abstract class GLFont extends GLObject {
      */
     public void setParameters(final GLTextureParameters params) {
         this.texture.setAttributes(params);
-    }
-
-    /**
-     * Checks if the GLFont object is valid. A GLFont object is considered valid
-     * if it has been initialized and not deleted.
-     *
-     * @return true if valid
-     * @since 15.06.11
-     */
-    public boolean isValid() {
-        return this.isInit;
-    }
+    }    
 
     /**
      * Binds the GLFont object. This calls bind using the underlying GLTexture
@@ -84,42 +62,18 @@ public abstract class GLFont extends GLObject {
      * @since 15.06.11
      */
     public void bind(final int target) {
-        this.texture.bind(target);
+        this.newBindTask(target).glRun(this.getThread());
     }
-
+    
     /**
-     * A GLTask that binds the GLFont texture object to the specified sampler
-     * target.
-     *
-     * @since 15.06.11
+     * Creates a new bind task for the underlying texture.
+     * @param target the target to bind the texture to.
+     * @return the GLTask.
+     * @since 15.06.12
      */
-    public class BindTask extends GLTask {
-
-        final int target;
-
-        /**
-         * Constructs a new bind task with the specified sampler target.
-         *
-         * @param target the sampler target to bind the texture to.
-         * @since 15.06.11
-         */
-        public BindTask(final int target) {
-            if ((this.target = target) < 0) {
-                throw new GLException("Invalid Font target!");
-            }
-        }
-
-        @Override
-        public void run() {
-            if (!GLFont.this.isValid()) {
-                throw new GLException("GLFont object is not valid!");
-            }
-
-            GLFont.this.texture.bind(target);
-        }
-    }
-
-    private final GLTask deleteTask = new DeleteTask();
+    public GLTask newBindTask(final int target) {
+        return this.texture.new BindTask(target);
+    }       
 
     /**
      * Deletes the GLFont object. This will delete the underlying texture
@@ -128,26 +82,17 @@ public abstract class GLFont extends GLObject {
      * @since 15.06.11
      */
     public void delete() {
-        this.deleteTask.glRun(this.getThread());
+        this.newDeleteTask().glRun(this.getThread());
     }
-
+    
     /**
-     * A GLTask that deletes the underlying GLTexture object.
-     *
-     * @since 15.06.11
+     * Creates a new GLTask for deleting the underlying texture object.
+     * @return the GLTask
+     * @since 15.06.12
      */
-    public class DeleteTask extends GLTask {
-
-        @Override
-        public void run() {
-            if (!GLFont.this.isValid()) {
-                throw new GLException("GLFont object needs to be initialized before calling delete!");
-            }
-
-            GLFont.this.texture.delete();
-            GLFont.this.isInit = false;
-        }
-    }
+    public GLTask newDeleteTask() {
+        return this.texture.new DeleteTask();
+    }    
 
     /**
      * Initializes the GLFont object. This will fail if the GLFont is already

@@ -92,6 +92,7 @@ public class GLAWTFont extends GLFont {
 
     /**
      * Rasterizes the ascii section of an AWT font to a BufferedImage object.
+     *
      * @param font the font object to rasterize.
      * @return the rasterized font.
      * @since 15.06.11
@@ -123,60 +124,41 @@ public class GLAWTFont extends GLFont {
         g2d.dispose();
 
         return img;
-    }
-
-    private final GLTask initTask = new InitTask();
+    }    
 
     @Override
     public final void init() {
-        this.initTask.glRun(this.getThread());
+        this.newInitTask().glRun(this.getThread());
+    }
+
+    public GLTask newInitTask() {
+        final BufferedImage img = GLAWTFont.buildFont(GLAWTFont.this.font);
+        final int width = img.getWidth();
+        final int height = img.getHeight();
+        final int[] pixels = new int[width * height];
+        final ByteBuffer pBuf = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.nativeOrder());
+
+        img.getRGB(0, 0, width, height, pixels, 0, width);
+
+        Arrays.stream(pixels).forEach(pBuf::putInt);
+
+        pBuf.flip();
+
+        return this.texture.new SetImage2DTask(
+                GLTexture.GENERATE_MIPMAP,
+                GLTextureInternalFormat.GL_RGBA8, GLTextureFormat.GL_BGRA,
+                width, height,
+                GLType.GL_UNSIGNED_BYTE, pBuf);
     }
 
     @Override
     public GLFontMetrics getMetrics() {
         return getFontMetrics(this.font);
-    }
-
-    /**
-     * A GLTask that initializes the GLAWTFont object.
-     * @since 15.06.11
-     */
-    public class InitTask extends GLTask {
-
-        @Override
-        public void run() {
-            if (GLAWTFont.this.isValid()) {
-                throw new GLException("GLFont object is already initialized!");
-            }
-
-            final BufferedImage img = GLAWTFont.buildFont(GLAWTFont.this.font);
-            final int width = img.getWidth();
-            final int height = img.getHeight();
-            final int[] pixels = new int[width * height];
-            final ByteBuffer pBuf = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.nativeOrder());
-
-            img.getRGB(0, 0, width, height, pixels, 0, width);
-
-            Arrays.stream(pixels).forEach(pBuf::putInt);
-
-            pBuf.flip();
-
-            if (!GLAWTFont.this.isValid()) {
-                GLAWTFont.this.init();
-            }
-
-            GLAWTFont.this.texture.setImage(
-                    GLTexture.GENERATE_MIPMAP,
-                    GLTextureInternalFormat.GL_RGBA8, GLTextureFormat.GL_BGRA,
-                    width, height,
-                    GLType.GL_UNSIGNED_BYTE, pBuf);
-
-            GLAWTFont.this.markInitializedAfter();
-        }
-    }
+    }    
 
     /**
      * Retrieves the metrics object associated with the given AWT Font object.
+     *
      * @param font the AWT font object.
      * @return the associated metrics object.
      * @since 15.06.11
