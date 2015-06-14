@@ -23,7 +23,10 @@ import java.util.Optional;
 
 /**
  * The GLImage2D class provides a simple 2D image container intended for use as
- * intermediate 2D texture data.
+ * intermediate 2D texture data. All pixels are stored as ints as 8_8_8_8.
+ * However, GLImage2D doesn't care what format the pixels are in (such as ARGB,
+ * BRGA, RGBA, ets). This decision is made because texture swizzling can be done
+ * on upload to the GLTexture.
  *
  * @author zmichaels
  * @since 15.02.02
@@ -407,45 +410,44 @@ public class GLImage2D implements Closeable {
     public final FloatBuffer asFloatBuffer() {
         this.data.flip();
         return this.data.asFloatBuffer().asReadOnlyBuffer();
-    }    
-
+    }            
+    
     /**
-     * Updates the specified 2D texture with this GLImage. This will copy a
-     * rectangle of pixels specified by the offset and size of this image to the
-     * specified texture. This calls GLTexture.update passing it the data and
-     * size of the GLImage.
-     *
-     * @param texture the texture to update.
-     * @param dataType the data type to treat the image as.
-     * @param offset the xy coordinate of the upper left pixel of the update
-     * rectangle.
-     * @since 15.02.02
+     * Mirrors the image along the x-axis.
+     * @return the mirrored image
+     * @since 15.04.30
      */
-    public final void updateTexture(
-            final GLTexture texture,   
-            final GLType dataType,
-            final int[] offset) {
-
-        this.data.flip();
+    public GLImage2D asMirrorX(){
+        final GLImage2D img = new GLImage2D(getWidth(), getHeight());        
         
-        texture.updateImage(0, offset[0], offset[1], GLTextureFormat.GL_RGBA, dataType, data);          
+        for(int y=0;y<getHeight();y++){
+            for(int x=0;x<getWidth();x++){
+                int mx = getWidth() - x - 1;
+                
+                img.data.put(data.get(y*getWidth() + getHeight() + mx));
+            }
+        }
+        
+        return img;
     }
-
+    
     /**
-     * Writes the GLImage to a 2D texture. This will call GLTexture.loadTexture
-     * passing it the data and size of the GLImage.
-     *
-     * @param texture the texture to write the image data to.
-     * @param dataType the data type to treat the GLImage data as.
-     * @since 15.02.02
+     * Mirrors the image along the y-axis
+     * @return the mirrored image
+     * @since 15.04.30
      */
-    public final void writeToTexture(
-            final GLTexture texture,
-            final GLType dataType) {
-
-        this.data.flip();
-
-        texture.setImage(0, GLTextureInternalFormat.GL_RGBA, GLTextureFormat.GL_RGBA, this.size[0], this.size[1], dataType, data);        
+    public GLImage2D asMirrorY(){
+        final GLImage2D img = new GLImage2D(getWidth(), getHeight());        
+        
+        for(int y=0;y<getHeight();y++){
+            for(int x=0;x<getWidth();x++){
+                int my = getHeight() - y - 1;
+                
+                img.data.put(data.get(my*getWidth() + getHeight() + x));
+            }
+        }
+        
+        return img;
     }
 
     @Override
