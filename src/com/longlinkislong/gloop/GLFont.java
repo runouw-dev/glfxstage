@@ -109,4 +109,6 @@ public abstract class GLFont extends GLObject {
      */
     public abstract GLFontMetrics getMetrics();
 
+    public abstract int getWidth();
+    public abstract int getHeight();
 }

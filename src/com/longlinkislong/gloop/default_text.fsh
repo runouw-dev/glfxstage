@@ -1,7 +1,7 @@
 #version 130
 
 in vec2 fUVs;
-in vec4 vUVs;
+in vec4 fCol;
 
 out vec4 fColor;
 

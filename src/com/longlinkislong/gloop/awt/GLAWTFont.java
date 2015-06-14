@@ -21,12 +21,17 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 
 /**
  * An implementation of GLFont that derives its texture from the AWT font
@@ -36,7 +41,8 @@ import java.util.Objects;
  * @since 15.06.11
  */
 public class GLAWTFont extends GLFont {
-
+    private int width;
+    private int height;
     private final Font font;
     private static final Map<Font, GLFontMetrics> METRICS_MAP = new HashMap<>();
 
@@ -90,6 +96,16 @@ public class GLAWTFont extends GLFont {
         return new int[]{requiredWidth, requiredHeight};
     }
 
+    @Override
+    public int getWidth() {
+        return this.width;
+    }
+    
+    @Override
+    public int getHeight() {
+        return this.height;
+    }
+    
     /**
      * Rasterizes the ascii section of an AWT font to a BufferedImage object.
      *
@@ -111,7 +127,7 @@ public class GLAWTFont extends GLFont {
         final float gridH = height / 10f;
 
         int j = 0;
-        g2d.translate(0, getFontMetrics(font).getMaxHeight());
+        g2d.translate(0, g2d.getFontMetrics().getAscent());
         for (char i = ' '; i <= '~'; i++) {
             g2d.drawString("" + i, ((i - ' ') % 10) / 10f * width, 0f);
             j++;
@@ -123,6 +139,11 @@ public class GLAWTFont extends GLFont {
 
         g2d.dispose();
 
+        try {
+            ImageIO.write(img, "PNG", new File("font.png"));
+        } catch (IOException ex) {
+            Logger.getLogger(GLAWTFont.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return img;
     }    
 
@@ -133,8 +154,8 @@ public class GLAWTFont extends GLFont {
 
     public GLTask newInitTask() {
         final BufferedImage img = GLAWTFont.buildFont(GLAWTFont.this.font);
-        final int width = img.getWidth();
-        final int height = img.getHeight();
+        this.width = img.getWidth();
+        this.height = img.getHeight();
         final int[] pixels = new int[width * height];
         final ByteBuffer pBuf = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.nativeOrder());
 

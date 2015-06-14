@@ -38,9 +38,7 @@ public class GLText extends GLObject implements CharSequence {
     private Optional<String> uSampler = Optional.empty();
     private Optional<String> uProj = Optional.empty();
     private Optional<String> uTrans = Optional.empty();
-    private GLFont font;
-    private int texWidth;
-    private int texHeight;
+    private GLFont font;    
 
     private GLBuffer vPos;
     private GLBuffer vCol;
@@ -79,8 +77,6 @@ public class GLText extends GLObject implements CharSequence {
         this.vCol = new GLBuffer(thread);
         this.vUVs = new GLBuffer(thread);
         this.vao = new GLVertexArray(thread);
-
-        this.init();
     }
 
     /**
@@ -105,7 +101,7 @@ public class GLText extends GLObject implements CharSequence {
                 this.vPos.new InitTask(),
                 this.vCol.new InitTask(),
                 this.vUVs.new InitTask());
-    }    
+    }
 
     @Override
     public int length() {
@@ -158,10 +154,21 @@ public class GLText extends GLObject implements CharSequence {
     /**
      * Overwrites the text that the GLText object is displaying.
      *
-     * @param seq the text to display.
+     * @param seq the text to display     
      * @since 15.06.11
      */
     public void setText(final CharSequence seq) {
+        this.newSetTextTask(seq).glRun(this.getThread());
+    }
+
+    /**
+     * Creates a new GLTask that updates the text object.
+     *
+     * @param seq the text to display
+     * @return the GLTask
+     * @since 15.06.11
+     */
+    public GLTask newSetTextTask(final CharSequence seq) {
         this.text = seq.toString();
 
         final GLVec2F offset = GLVec2F.create();
@@ -286,8 +293,8 @@ public class GLText extends GLObject implements CharSequence {
 
             final float width = metrics.getCharWidth(c);
             final float height = metrics.getMaxHeight();
-            final float txW = width / (float) texWidth;
-            final float txH = height / (float) texHeight;
+            final float txW = width / (float) this.font.getWidth();
+            final float txH = height / (float) this.font.getHeight();
 
             float u = left / 10f;
             float v = top / 10f;
@@ -317,7 +324,7 @@ public class GLText extends GLObject implements CharSequence {
             final float u0 = u;
             final float u1 = u + txW;
             final float v0 = v;
-            final float v1 = v + txH;
+            final float v1 = v + txH;                       
 
             pos.add(GLVec2F.create(x0, y0));
             pos.add(GLVec2F.create(x0, y1));
@@ -340,23 +347,14 @@ public class GLText extends GLObject implements CharSequence {
             offset.set(0, offset.x() + width);
         }
 
-        // run the tasks immediately
-        final GLTask uploadAll = GLTask.join(
-                this.vPos.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec2F(pos)),
-                this.vCol.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec4F(col)),
-                this.vUVs.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec2F(uvs)));
-
-        uploadAll.glRun(this.getThread());
-
-        final GLTask reinitVao = GLTask.join(
-                this.vao.new DeleteTask(),
-                this.vao.new InitTask());
-
-        reinitVao.glRun(this.getThread());
-
         final GLVertexAttributes attribs = this.vAttribs.orElse(DEFAULT_ATTRIBUTES);
 
-        final GLTask attachBuffers = GLTask.join(
+        this.length = pos.size() / 6;
+
+        return GLTask.join(
+                this.vPos.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec2F(pos), GLBufferUsage.GL_DYNAMIC_DRAW),
+                this.vCol.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec4F(col), GLBufferUsage.GL_DYNAMIC_DRAW),
+                this.vUVs.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec2F(uvs), GLBufferUsage.GL_DYNAMIC_DRAW),
                 this.vao.new AttachBufferTask(
                         attribs.getLocation("vPos"), this.vPos,
                         GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2),
@@ -365,12 +363,7 @@ public class GLText extends GLObject implements CharSequence {
                         GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC4),
                 this.vao.new AttachBufferTask(
                         attribs.getLocation("vUVs"), this.vUVs,
-                        GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2)
-        );
-
-        attachBuffers.glRun(this.getThread());
-
-        this.length = pos.size() / 6;
+                        GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2));
     }
 
     /**
@@ -483,8 +476,9 @@ public class GLText extends GLObject implements CharSequence {
         final String uPr = this.uProj.orElse(GLText.DEFAULT_PROJECTION_UNAME);
         final String uTr = this.uTrans.orElse(GLText.DEFAULT_TRANSLATION_UNAME);
         final int verts = (int) (this.length * 6 * percent);
-
+        
         return GLTask.join(
+                this.font.newBindTask(target),
                 prog.new SetUniformMatrixFTask(uPr, pr.asGLMat4F()),
                 prog.new SetUniformMatrixFTask(uTr, tr.asGLMat4F()),
                 prog.new SetUniformITask(uFont, target),
