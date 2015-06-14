@@ -30,22 +30,27 @@ public class GLPingPongTask extends GLTask {
         this.back = Optional.ofNullable(task);
     }
 
-    public void swap() throws InterruptedException {
-        this.semaphore.acquire();
-        final Optional<GLTask> temp = this.front;
+    public void swap() {
+        try {
+            this.semaphore.acquire();
+            final Optional<GLTask> temp = this.front;
 
-        this.front = this.back;
-        this.back = temp;
-        this.semaphore.release();
+            this.front = this.back;
+            this.back = temp;
+            this.semaphore.release();
+        } catch (InterruptedException iex) {
+            throw new GLException("Unable to swap instructions!", iex);
+        }
     }
 
     @Override
     public void run() {
         try {
-            this.swap();
+            this.semaphore.acquire();
             this.front.ifPresent(Runnable::run);
+            this.semaphore.release();
         } catch (InterruptedException iex) {
-            throw new RuntimeException("Unable to swap instructions!", iex);
+            throw new GLException("Unable get lock!", iex);
         }
     }
 
