@@ -106,7 +106,7 @@ public class GLAWTFont extends GLFont {
 
         g2d.setColor(Color.WHITE);
         g2d.setFont(font);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.KEY_ANTIALIASING);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
         final float gridH = height / 10f;
 
