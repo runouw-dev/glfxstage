@@ -515,4 +515,25 @@ public class GLText extends GLObject implements CharSequence {
                 this.vCol.new DeleteTask(),
                 this.vUVs.new DeleteTask());
     }
+    
+    @Override
+    public boolean equals(final Object other) {
+        if(this == other) {
+            return true;
+        } else if(other instanceof GLText) {
+            final GLText oText = (GLText) other;
+            
+            return (this.font.equals(oText.font) && this.text.equals(oText.text));
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 11 * hash + Objects.hashCode(this.text);
+        hash = 11 * hash + Objects.hashCode(this.font);
+        return hash;
+    }
 }

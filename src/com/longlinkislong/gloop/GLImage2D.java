@@ -19,6 +19,8 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel.MapMode;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -377,8 +379,8 @@ public class GLImage2D implements Closeable {
      * @return A ByteBuffer holding the same data as this object.
      * @since 15.02.02
      */
-    public final ByteBuffer asByteBuffer() {
-        return this.data.asReadOnlyBuffer();
+    public final ByteBuffer asByteBuffer() {        
+        return this.data.asReadOnlyBuffer().order(ByteOrder.nativeOrder());
     }
 
     /**
@@ -388,7 +390,7 @@ public class GLImage2D implements Closeable {
      * @since 15.02.02
      */
     public final ShortBuffer asShortBuffer() {
-        return this.data.asShortBuffer().asReadOnlyBuffer();
+        return this.asByteBuffer().asShortBuffer();
     }
 
     /**
@@ -396,9 +398,8 @@ public class GLImage2D implements Closeable {
      *
      * @return A read-only IntBuffer holding the same data as this object.
      */
-    public final IntBuffer asIntBuffer() {
-        this.data.flip();
-        return this.data.asIntBuffer().asReadOnlyBuffer();
+    public final IntBuffer asIntBuffer() {        
+        return this.asByteBuffer().asIntBuffer();
     }
 
     /**
@@ -407,9 +408,8 @@ public class GLImage2D implements Closeable {
      * @return A read-only IntBuffer holding the same data as this object.
      * @since 15.02.02
      */
-    public final FloatBuffer asFloatBuffer() {
-        this.data.flip();
-        return this.data.asFloatBuffer().asReadOnlyBuffer();
+    public final FloatBuffer asFloatBuffer() {        
+        return this.asByteBuffer().asFloatBuffer();
     }            
     
     /**
@@ -458,4 +458,24 @@ public class GLImage2D implements Closeable {
         }
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if(this == other) {
+            return true;
+        } else if(other instanceof GLImage2D) {
+            final GLImage2D oImg = (GLImage2D) other;
+            
+            return Arrays.equals(this.size, oImg.size) && this.data.equals(oImg.data);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 43 * hash + Objects.hashCode(this.data);
+        hash = 43 * hash + Arrays.hashCode(this.size);
+        return hash;
+    }
 }

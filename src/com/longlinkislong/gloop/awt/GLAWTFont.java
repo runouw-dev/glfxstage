@@ -196,4 +196,22 @@ public class GLAWTFont extends GLFont {
             return metrics;
         }
     }
+    
+    @Override
+    public boolean equals(Object other) {
+        if(this == other) {
+            return true;
+        } else if (other instanceof GLAWTFont) {
+            return this.font.equals(((GLAWTFont) other).font);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 97 * hash + Objects.hashCode(this.font);
+        return hash;
+    }
 }
