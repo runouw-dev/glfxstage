@@ -505,7 +505,8 @@ public class GLText extends GLObject implements CharSequence {
     /**
      * Constructs a new
      *
-     * @return
+     * @return the delete task
+     * @since 15.06.11
      */
     public GLTask newDeleteTask() {
         return GLTask.join(

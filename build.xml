@@ -33,15 +33,30 @@
     
     <target name="-clear-deps-gloop">
         <delete>
-            <fileset dir="obj/gloop/" includes="*.version"/>
+            <fileset dir="obj/gloop/" includes="nightly.version"/>
         </delete>
     </target>        
+    
+    <target description="bundle sources in a jar" name="package-sources">
+        <jar basedir="src" destfile="dist/${ant.project.name}-sources.jar"/>
+    </target>
+    <target depends="-javadoc-build" description="bundle javadoc in a jar" name="package-doc">
+        <jar basedir="dist/javadoc" destfile="dist/${ant.project.name}-javadoc.jar"/>
+    </target>
     
     <target name="clear-deps-nightly" depends="-clear-deps-gloop"/>
     <target name="clear-deps" depends="clear-deps-nightly"/>
     <target name="check-deps" depends="-check-deps-gloop"/>
     <target name="-pre-compile" depends="check-deps"/>
     <target name="-post-clean" depends="clear-deps-nightly"/>
+    
+    <target name="-post-jar" depends="package-sources,package-doc">
+        <zip destfile="dist/${ant.project.name}-all.jar">
+            <zipfileset src="dist/${ant.project.name}-sources.jar"/>
+            <zipfileset src="dist/${ant.project.name}.jar"/>
+            <zipfileset src="dist/${ant.project.name}-javadoc.jar"/>
+        </zip>
+    </target>
     
     <!--
 
