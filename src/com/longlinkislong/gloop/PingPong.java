@@ -7,11 +7,12 @@ package com.longlinkislong.gloop;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * A data structure that manages two instances of a type for safe read/write.
  * For proper use, it is recommended to do all write functions to the back
- * object and then prior to read, swap the objects and read from the front. 
+ * object and then prior to read, swap the objects and read from the front.
  *
  * @author zmichaels
  * @param <T> the type
@@ -102,6 +103,18 @@ public class PingPong<T> {
     public PingPong(final T front, final T back) {
         this.front = front;
         this.back = back;
+    }
+
+    /**
+     * Constructs a new PingPong object backed by two objects.
+     *
+     * @param constructor A function that supplies the front and back objects.
+     * Usually this will be a constructor.
+     * @since 15.0.28
+     */
+    public PingPong(final Supplier<T> constructor) {
+        this.front = constructor.get();
+        this.back = constructor.get();
     }
 
     /**
