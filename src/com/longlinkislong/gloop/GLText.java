@@ -216,6 +216,7 @@ public class GLText extends GLObject implements CharSequence {
                             color = GLColors.LIGHT_GRAY.color;
                             break;
                         case "gray":
+                        case "grey":
                             colorStack.push(color);
                             color = GLColors.GRAY.color;
                             break;

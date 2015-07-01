@@ -35,8 +35,7 @@ import java.util.Optional;
  */
 public class GLImage2D implements Closeable {
 
-    private static int[] TEMP = null;
-
+    private static int[] TEMP = null;    
     protected final ByteBuffer data;
     private final int[] size;
     private Optional<Closeable> resource = Optional.empty();
