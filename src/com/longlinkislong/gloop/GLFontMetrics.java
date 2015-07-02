@@ -13,27 +13,61 @@ package com.longlinkislong.gloop;
 public interface GLFontMetrics {
 
     /**
+     * Retrieves the height of a character in pixels.
+     *
+     * @return the height in pixels
+     * @since 15.07.01
+     */
+    public float getLineHeight();
+    
+    /**
+     * Retrieves the x offset of a character in pixels.
+     *
+     * @param c the character
+     * @return the x offset in pixels
+     * @since 15.07.01
+     */
+    public float getOffX(char c);
+    
+    /**
+     * Retrieves the y offset of a character in pixels.
+     *
+     * @param c the character
+     * @return the y offset in pixels
+     * @since 15.07.01
+     */
+    public float getOffY(char c);
+    
+    /**
+     * Retrieves the x advance of a character in pixels.
+     *
+     * @param c the character
+     * @return the y offset in pixels
+     * @since 15.07.01
+     */
+    public float getCharAdvancement(char c);
+    
+    /**
      * Retrieves the width of a character in pixels.
      *
      * @param c the character
      * @return the width in pixels
-     * @since 15.06.18
+     * @since 15.07.01
      */
     public float getCharWidth(char c);
-
+    
     /**
-     * Retrieves the max height of a character in pixels. Max height is defined
-     * as the combination of max ascent and max descent for a character.
+     * Retrieves the width of a character in pixels.
      *
-     * @return the max height
-     * @since 15.06.18
+     * @param c the character
+     * @return the height in pixels
+     * @since 15.07.01
      */
-    public float getMaxHeight();
+    public float getCharHeight(char c);
 
-    /**
-     * Retrieves the max width of a character in pixels.
-     * @return the max width
-     * @since 15.06.18
-     */
-    public float getMaxWidth();
+    
+    public float getU0(char c);
+    public float getU1(char c);
+    public float getV0(char c);
+    public float getV1(char c);
 }

@@ -289,43 +289,38 @@ public class GLText extends GLObject implements CharSequence {
             //</editor-fold>
 
             final char c = text.charAt(i);
-            final int top = (c - ' ') / 10;
-            final int left = (c - ' ') % 10;
-
-            final float width = metrics.getCharWidth(c);
-            final float height = metrics.getMaxHeight();
-            final float txW = width / (float) this.font.getWidth();
-            final float txH = height / (float) this.font.getHeight();
-
-            float u = left / 10f;
-            float v = top / 10f;
+            final float advance = metrics.getCharAdvancement(c);
+            final float lineHeight = metrics.getLineHeight();
 
             if (c == '\t') {
-                offset.set(0, offset.x() + 2f * width);
+                offset.set(0, offset.x() + 4f * advance);
                 continue;
             } else if (c == '\r') {
                 offset.set(0, 0f);
                 continue;
             } else if (c == '\n') {
-                offset.set(1, offset.y() + height);
+                offset.set(1, offset.y() + lineHeight);
                 continue;
             } else if (c == ' ') {
-                offset.set(0, offset.x() + width);
+                offset.set(0, offset.x() + advance);
                 continue;
             } else if (c < ' ' || c > '~') {
                 // skip non-ascii text characters
                 continue;
             }
+            
+            final float width = metrics.getCharWidth(c);
+            final float height = metrics.getCharHeight(c);
 
             final float x0 = offset.x();
             final float x1 = offset.x() + width;
             final float y0 = offset.y();
             final float y1 = offset.y() + height;
 
-            final float u0 = u;
-            final float u1 = u + txW;
-            final float v0 = v;
-            final float v1 = v + txH;                       
+            final float u0 = metrics.getU0(c);
+            final float u1 = metrics.getU1(c);
+            final float v0 = metrics.getV0(c);
+            final float v1 = metrics.getV1(c);                       
 
             pos.add(GLVec2F.create(x0, y0));
             pos.add(GLVec2F.create(x0, y1));
@@ -345,7 +340,7 @@ public class GLText extends GLObject implements CharSequence {
                 col.add(color);
             }
 
-            offset.set(0, offset.x() + width);
+            offset.set(0, offset.x() + advance);
         }
 
         final GLVertexAttributes attribs = this.vAttribs.orElse(DEFAULT_ATTRIBUTES);

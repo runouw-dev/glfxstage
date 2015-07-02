@@ -18,6 +18,7 @@ import com.longlinkislong.gloop.GLType;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -82,12 +83,14 @@ public class GLAWTFont extends GLFont {
      * @since 15.06.11
      */
     public static int[] getFontTextureSize(final Font font) throws GLException {
-        final GLFontMetrics metrics = getFontMetrics(font);
-        final float maxWidth = metrics.getMaxWidth();
-        final float maxHeight = metrics.getMaxHeight();
+        final Canvas dummy = new Canvas();
+        final FontMetrics metrics = dummy.getFontMetrics(font);
+        
+        final float maxWidth = metrics.getHeight();
+        final float maxHeight = metrics.getHeight();
 
-        final int requiredWidth = GLTools.getNearestPowerOf2((int) (maxWidth * 10f));
-        final int requiredHeight = GLTools.getNearestPowerOf2((int) (maxHeight * 10));
+        final int requiredWidth = (int) (maxWidth * 10f);
+        final int requiredHeight = (int) (maxHeight * 10f);
 
         if (requiredWidth > 16384 || requiredHeight > 16384) {
             throw new GLException("Font texture is too big!");
@@ -188,8 +191,7 @@ public class GLAWTFont extends GLFont {
         if (METRICS_MAP.containsKey(font)) {
             return METRICS_MAP.get(font);
         } else {
-            final Canvas dummy = new Canvas();
-            final GLFontMetrics metrics = new GLAWTFontMetrics(dummy.getFontMetrics(font));
+            final GLFontMetrics metrics = new GLAWTFontMetrics(font);
 
             METRICS_MAP.put(font, metrics);
 
