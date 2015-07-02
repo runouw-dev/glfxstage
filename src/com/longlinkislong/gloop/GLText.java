@@ -71,12 +71,13 @@ public class GLText extends GLObject implements CharSequence {
         super(thread);
 
         this.font = Objects.requireNonNull(font);
-        this.text = seq.toString();
-
+        
         this.vPos = new GLBuffer(thread);
         this.vCol = new GLBuffer(thread);
         this.vUVs = new GLBuffer(thread);
         this.vao = new GLVertexArray(thread);
+        
+        setText(seq.toString());
     }
 
     /**
