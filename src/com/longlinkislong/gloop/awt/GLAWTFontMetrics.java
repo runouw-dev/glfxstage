@@ -80,7 +80,7 @@ public class GLAWTFontMetrics implements GLFontMetrics {
 
     @Override
     public float getLineHeight() {
-        return this.metrics.getHeight();
+        return (int) this.metrics.getHeight();
     }
 
     @Override
@@ -95,7 +95,7 @@ public class GLAWTFontMetrics implements GLFontMetrics {
 
     @Override
     public float getCharAdvancement(char c) {
-        return getGlyph(c).getGlyphMetrics(0).getAdvance();
+        return (int) getGlyph(c).getGlyphMetrics(0).getAdvance();
     }
 
     @Override

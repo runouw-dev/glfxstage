@@ -299,6 +299,7 @@ public class GLText extends GLObject implements CharSequence {
                 offset.set(0, 0f);
                 continue;
             } else if (c == '\n') {
+                offset.set(0, 0);
                 offset.set(1, offset.y() + lineHeight);
                 continue;
             } else if (c == ' ') {

@@ -31,12 +31,19 @@ public class GLFontGlpyhSet {
     }
     
     public void add(char c){
-        supportedIndices.put(c, supported.size());
-        supported.add(c);
+        if(!supported.contains(c)){
+            supportedIndices.put(c, supported.size());
+            supported.add(c);
+        }
     }
     public void addRange(char c, char d){
         for(int i=(int)c;i<=(int)d;i++){
             add((char) i);
+        }
+    }
+    public void add(CharSequence str){
+        for(int i=0;i<str.length();i++){
+            add(str.charAt(i));
         }
     }
     
