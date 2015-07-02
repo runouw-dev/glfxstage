@@ -5,6 +5,7 @@
  */
 package com.longlinkislong.gloop.awt;
 
+import com.longlinkislong.gloop.GLFontGlpyhSet;
 import com.longlinkislong.gloop.GLFontMetrics;
 import com.longlinkislong.gloop.GLTools;
 import java.awt.Canvas;
@@ -24,34 +25,45 @@ import java.util.Objects;
 public class GLAWTFontMetrics implements GLFontMetrics {
 
     private final Font font;
+    private final GLFontGlpyhSet supportedGlyphs;
     private final int texWidth;
     private final int texHeight;
+    private final int sqr;
     
     private final FontMetrics metrics;
     
     private GlyphVector getGlyph(char c){
-    return font.createGlyphVector(new FontRenderContext(new AffineTransform(), true, true), "" + c);
-}
+        return font.createGlyphVector(new FontRenderContext(new AffineTransform(), true, true), "" + c);
+    }
 
     /**
      * Constructs a new GLAWTFontMetrics from the AWTFontMetrics object.
      * @param font the font to use
+     * @param supportedGlyphs
      * @since 15.06.11
      */
-    public GLAWTFontMetrics(final Font font) {
+    public GLAWTFontMetrics(final Font font, final GLFontGlpyhSet supportedGlyphs) {
         this.font = Objects.requireNonNull(font);
+        this.supportedGlyphs = supportedGlyphs;
         
         final Canvas dummy = new Canvas();
         this.metrics = dummy.getFontMetrics(font);
         
         final float maxWidth = metrics.getHeight();
         final float maxHeight = metrics.getHeight();
+        
+        sqr = (int)Math.sqrt(supportedGlyphs.size()) + 1;
 
-        final int requiredWidth = (int) (maxWidth * 10f);
-        final int requiredHeight = (int) (maxHeight * 10f);
+        final int requiredWidth = (int) (maxWidth * sqr);
+        final int requiredHeight = (int) (maxHeight * sqr);
         
         this.texWidth = requiredWidth;
         this.texHeight = requiredHeight;
+    }
+    
+    @Override
+    public boolean isCharSupported(char c) {
+        return supportedGlyphs.contains(c);
     }
 
     @Override
@@ -88,7 +100,7 @@ public class GLAWTFontMetrics implements GLFontMetrics {
 
     @Override
     public float getU0(char c) {
-        final float left = ((c - ' ') % 10) * getLineHeight();
+        final float left = ((supportedGlyphs.indexOf(c)) % sqr) * getLineHeight();
         
         return left / texWidth;
     }
@@ -100,7 +112,7 @@ public class GLAWTFontMetrics implements GLFontMetrics {
 
     @Override
     public float getV0(char c) {
-        final float top = ((c - ' ') / 10) * getLineHeight();
+        final float top = ((supportedGlyphs.indexOf(c)) / sqr) * getLineHeight();
         
         return top / texHeight;
     }

@@ -14,7 +14,8 @@ package com.longlinkislong.gloop;
  * @since 15.06.11
  */
 public abstract class GLFont extends GLObject {
-
+    protected final GLFontGlpyhSet supportedGlyphs;
+    
     /**
      * The underlying OpenGL texture object. This object should be reinitialized
      * in the init function when needed since it may be deleted by
@@ -22,27 +23,39 @@ public abstract class GLFont extends GLObject {
      *
      * @since 15.06.11
      */
-    protected GLTexture texture;        
+    protected GLTexture texture;
 
     /**
      * Constructs a new GLFont object on the default OpenGL thread.
      *
-     * @since 15.06.11
+     * @since 15.07.01
      */
     public GLFont() {
-        this(GLThread.getDefaultInstance());
+        this(GLThread.getDefaultInstance(), GLFontGlpyhSet.DEFAULT_GLYPH_SET);
     }
 
     /**
      * Constructs a new GLFont object on the default OpenGL thread.
      *
      * @param thread the thread to create the object on.
-     * @since 15.06.11
+     * @since 15.07.01
      */
     public GLFont(final GLThread thread) {
+        this(thread, GLFontGlpyhSet.DEFAULT_GLYPH_SET);
+    }
+    
+    /**
+     * Constructs a new GLFont object on the default OpenGL thread.
+     *
+     * @param thread the thread to create the object on.
+     * @param supportedGlyphs
+     * @since 15.07.01
+     */
+    public GLFont(final GLThread thread, GLFontGlpyhSet supportedGlyphs) {
         super(thread);
-
+        
         this.texture = new GLTexture();
+        this.supportedGlyphs = supportedGlyphs.asUnmodifiable();
     }
 
     /**
@@ -108,6 +121,10 @@ public abstract class GLFont extends GLObject {
      * @since 15.06.11
      */
     public abstract GLFontMetrics getMetrics();
+
+    public GLFontGlpyhSet getSupportedGlyphs() {
+        return supportedGlyphs;
+    }
 
     public abstract int getWidth();
     public abstract int getHeight();

@@ -11,6 +11,8 @@ package com.longlinkislong.gloop;
  * @since 15.06.18
  */
 public interface GLFontMetrics {
+    
+    public boolean isCharSupported(char c);
 
     /**
      * Retrieves the height of a character in pixels.

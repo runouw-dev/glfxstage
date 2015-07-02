@@ -304,8 +304,8 @@ public class GLText extends GLObject implements CharSequence {
             } else if (c == ' ') {
                 offset.set(0, offset.x() + advance);
                 continue;
-            } else if (c < ' ' || c > '~') {
-                // skip non-ascii text characters
+            } else if (!metrics.isCharSupported(c)) {
+                // skip supported text characters
                 continue;
             }
             
