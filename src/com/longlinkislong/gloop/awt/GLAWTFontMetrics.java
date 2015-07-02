@@ -85,12 +85,14 @@ public class GLAWTFontMetrics implements GLFontMetrics {
 
     @Override
     public float getOffX(char c) {
-        return (float) getGlyph(c).getVisualBounds().getMinX() + getLineHeight()/2;
+        //return (float) getGlyph(c).getVisualBounds().getMinX() + getLineHeight()/2;
+        return 0;
     }
 
     @Override
     public float getOffY(char c) {
-        return (float) getGlyph(c).getVisualBounds().getMinY() + getLineHeight()/2;
+        //return (float) getGlyph(c).getVisualBounds().getMinY() + getLineHeight()/2;
+        return 0;
     }
 
     @Override

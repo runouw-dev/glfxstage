@@ -312,11 +312,13 @@ public class GLText extends GLObject implements CharSequence {
             
             final float width = metrics.getCharWidth(c);
             final float height = metrics.getCharHeight(c);
+            final float offX = metrics.getOffX(c);
+            final float offY = metrics.getOffY(c);
 
-            final float x0 = offset.x();
-            final float x1 = offset.x() + width;
-            final float y0 = offset.y();
-            final float y1 = offset.y() + height;
+            final float x0 = offset.x() + offX;
+            final float x1 = offset.x() + offX + width;
+            final float y0 = offset.y() + offY;
+            final float y1 = offset.y() + offY + height;
 
             final float u0 = metrics.getU0(c);
             final float u1 = metrics.getU1(c);
