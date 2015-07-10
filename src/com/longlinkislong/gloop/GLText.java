@@ -352,9 +352,9 @@ public class GLText extends GLObject implements CharSequence {
         this.length = pos.size() / 6;
 
         return GLTask.join(
-                this.vPos.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec2F(pos), GLBufferUsage.GL_DYNAMIC_DRAW),
-                this.vCol.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec4F(col), GLBufferUsage.GL_DYNAMIC_DRAW),
-                this.vUVs.new UploadTask(GLBufferTarget.GL_ARRAY_BUFFER, GLTools.wrapVec2F(uvs), GLBufferUsage.GL_DYNAMIC_DRAW),
+                this.vPos.new UploadTask(GLTools.wrapVec2F(pos), GLBufferUsage.GL_DYNAMIC_DRAW),
+                this.vCol.new UploadTask(GLTools.wrapVec4F(col), GLBufferUsage.GL_DYNAMIC_DRAW),
+                this.vUVs.new UploadTask(GLTools.wrapVec2F(uvs), GLBufferUsage.GL_DYNAMIC_DRAW),
                 this.vao.new AttachBufferTask(
                         attribs.getLocation("vPos"), this.vPos,
                         GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2),

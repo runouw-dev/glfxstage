@@ -54,7 +54,7 @@ public abstract class GLFont extends GLObject {
     public GLFont(final GLThread thread, GLFontGlpyhSet supportedGlyphs) {
         super(thread);
         
-        this.texture = new GLTexture();
+        this.texture = new GLTexture(thread);
         this.supportedGlyphs = supportedGlyphs.asUnmodifiable();
     }
 

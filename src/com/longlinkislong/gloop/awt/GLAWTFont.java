@@ -12,8 +12,10 @@ import com.longlinkislong.gloop.GLFontMetrics;
 import com.longlinkislong.gloop.GLTask;
 import com.longlinkislong.gloop.GLTexture;
 import com.longlinkislong.gloop.GLTextureFormat;
+import static com.longlinkislong.gloop.GLTextureFormat.GL_BGRA;
 import com.longlinkislong.gloop.GLTextureInternalFormat;
 import com.longlinkislong.gloop.GLThread;
+import com.longlinkislong.gloop.GLTools;
 import com.longlinkislong.gloop.GLType;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -42,6 +44,8 @@ import javax.imageio.ImageIO;
  * @since 15.06.11
  */
 public class GLAWTFont extends GLFont {
+    private static final boolean FONT_TO_FILE = System.getProperty("com.longlinkislong.gloop.GLFont.fontToFile", "0").equals("1");
+    
     private int texWidth;
     private int texHeight;
     private final Font font;
@@ -173,11 +177,13 @@ public class GLAWTFont extends GLFont {
         }
 
         g2d.dispose();
-
-        try {
-            ImageIO.write(img, "PNG", new File("font.png"));
-        } catch (IOException ex) {
-            Logger.getLogger(GLAWTFont.class.getName()).log(Level.SEVERE, null, ex);
+        
+        if(FONT_TO_FILE){
+            try {
+                ImageIO.write(img, "PNG", new File("font.png"));
+            } catch (IOException ex) {
+                Logger.getLogger(GLAWTFont.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         return img;
     }    
@@ -200,11 +206,8 @@ public class GLAWTFont extends GLFont {
 
         pBuf.flip();
 
-        return this.texture.new SetImage2DTask(
-                GLTexture.GENERATE_MIPMAP,
-                GLTextureInternalFormat.GL_RGBA8, GLTextureFormat.GL_BGRA,
-                texWidth, texHeight,
-                GLType.GL_UNSIGNED_BYTE, pBuf);
+        
+        return this.texture.new UpdateImage2DTask(GLTools.recommendedMipmaps(texWidth, texHeight), 0, 0, texWidth, texHeight, GL_BGRA, GLType.GL_UNSIGNED_BYTE, pBuf);
     }
 
     @Override
