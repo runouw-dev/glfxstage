@@ -13,6 +13,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
 
 /**
  * An object that represents visible text.
@@ -38,7 +40,7 @@ public class GLText extends GLObject implements CharSequence {
     private Optional<String> uSampler = Optional.empty();
     private Optional<String> uProj = Optional.empty();
     private Optional<String> uTrans = Optional.empty();
-    private GLFont font;    
+    private GLFont font;
 
     private GLBuffer vPos;
     private GLBuffer vCol;
@@ -71,12 +73,12 @@ public class GLText extends GLObject implements CharSequence {
         super(thread);
 
         this.font = Objects.requireNonNull(font);
-        
+
         this.vPos = new GLBuffer(thread);
         this.vCol = new GLBuffer(thread);
         this.vUVs = new GLBuffer(thread);
         this.vao = new GLVertexArray(thread);
-        
+
         setText(seq.toString());
     }
 
@@ -155,7 +157,7 @@ public class GLText extends GLObject implements CharSequence {
     /**
      * Overwrites the text that the GLText object is displaying.
      *
-     * @param seq the text to display     
+     * @param seq the text to display
      * @since 15.06.11
      */
     public void setText(final CharSequence seq) {
@@ -310,7 +312,7 @@ public class GLText extends GLObject implements CharSequence {
                 // skip supported text characters
                 continue;
             }
-            
+
             final float width = metrics.getCharWidth(c);
             final float height = metrics.getCharHeight(c);
             final float offX = metrics.getOffX(c);
@@ -324,7 +326,7 @@ public class GLText extends GLObject implements CharSequence {
             final float u0 = metrics.getU0(c);
             final float u1 = metrics.getU1(c);
             final float v0 = metrics.getV0(c);
-            final float v1 = metrics.getV1(c);                       
+            final float v1 = metrics.getV1(c);
 
             pos.add(GLVec2F.create(x0, y0));
             pos.add(GLVec2F.create(x0, y1));
@@ -428,7 +430,7 @@ public class GLText extends GLObject implements CharSequence {
             final GLMat4 pr, final GLMat4 tr,
             final int target, final float percent) {
 
-        this.newDrawTask(pr, tr, target, percent).glRun(this.getThread());
+        this.newDrawTask(pr, tr, target, percent).glRun(this.getThread());       
     }
 
     /**
@@ -476,12 +478,13 @@ public class GLText extends GLObject implements CharSequence {
         final String uPr = this.uProj.orElse(GLText.DEFAULT_PROJECTION_UNAME);
         final String uTr = this.uTrans.orElse(GLText.DEFAULT_TRANSLATION_UNAME);
         final int verts = (int) (this.length * 6 * percent);
-        
+
         return GLTask.join(
                 this.font.newBindTask(target),
                 prog.new SetUniformMatrixFTask(uPr, pr.asGLMat4F()),
                 prog.new SetUniformMatrixFTask(uTr, tr.asGLMat4F()),
                 prog.new SetUniformITask(uFont, target),
+                prog.new UseTask(),
                 this.vao.new DrawArraysTask(GLDrawMode.GL_TRIANGLES, 0, verts)
         );
     }
@@ -515,14 +518,14 @@ public class GLText extends GLObject implements CharSequence {
                 this.vCol.new DeleteTask(),
                 this.vUVs.new DeleteTask());
     }
-    
+
     @Override
     public boolean equals(final Object other) {
-        if(this == other) {
+        if (this == other) {
             return true;
-        } else if(other instanceof GLText) {
+        } else if (other instanceof GLText) {
             final GLText oText = (GLText) other;
-            
+
             return (this.font.equals(oText.font) && this.text.equals(oText.text));
         } else {
             return false;

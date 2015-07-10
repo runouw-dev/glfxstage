@@ -14,6 +14,10 @@ import com.longlinkislong.gloop.GLTexture;
 import com.longlinkislong.gloop.GLTextureFormat;
 import static com.longlinkislong.gloop.GLTextureFormat.GL_BGRA;
 import com.longlinkislong.gloop.GLTextureInternalFormat;
+import com.longlinkislong.gloop.GLTextureMagFilter;
+import com.longlinkislong.gloop.GLTextureMinFilter;
+import com.longlinkislong.gloop.GLTextureParameters;
+import com.longlinkislong.gloop.GLTextureWrap;
 import com.longlinkislong.gloop.GLThread;
 import com.longlinkislong.gloop.GLTools;
 import com.longlinkislong.gloop.GLType;
@@ -34,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
 
 /**
@@ -44,8 +49,9 @@ import javax.imageio.ImageIO;
  * @since 15.06.11
  */
 public class GLAWTFont extends GLFont {
+
     private static final boolean FONT_TO_FILE = System.getProperty("com.longlinkislong.gloop.GLFont.fontToFile", "0").equals("1");
-    
+
     private int texWidth;
     private int texHeight;
     private final Font font;
@@ -76,7 +82,7 @@ public class GLAWTFont extends GLFont {
         this.font = Objects.requireNonNull(font);
         this.init();
     }
-    
+
     /**
      * Constructs a new GLFont object on the default OpenGL thread from an AWT
      * font object
@@ -116,11 +122,11 @@ public class GLAWTFont extends GLFont {
     public int[] getFontTextureSize() throws GLException {
         final Canvas dummy = new Canvas();
         final FontMetrics metrics = dummy.getFontMetrics(font);
-        
+
         final float maxWidth = metrics.getHeight();
         final float maxHeight = metrics.getHeight();
-        
-        final int sqr = (int)Math.sqrt(getSupportedGlyphs().size()) + 1;
+
+        final int sqr = (int) Math.sqrt(getSupportedGlyphs().size()) + 1;
 
         final int requiredWidth = (int) (maxWidth * sqr);
         final int requiredHeight = (int) (maxHeight * sqr);
@@ -136,12 +142,12 @@ public class GLAWTFont extends GLFont {
     public int getWidth() {
         return this.texWidth;
     }
-    
+
     @Override
     public int getHeight() {
         return this.texHeight;
     }
-    
+
     /**
      * Rasterizes the ascii section of an AWT font to a BufferedImage object.
      *
@@ -155,7 +161,7 @@ public class GLAWTFont extends GLFont {
         final int height = size[1];
         final BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2d = img.createGraphics();
-        
+
         final int sqr = (int) Math.sqrt(getSupportedGlyphs().size()) + 1;
 
         g2d.setColor(Color.WHITE);
@@ -164,10 +170,10 @@ public class GLAWTFont extends GLFont {
 
         final float gridH = height / sqr;
         final float gridW = width / sqr;
-        
+
         int j = 0;
         g2d.translate(0, g2d.getFontMetrics().getAscent());
-        for (int i=0;i<supportedGlyphs.size();i++) {
+        for (int i = 0; i < supportedGlyphs.size(); i++) {
             g2d.drawString("" + supportedGlyphs.get(i), (i % sqr) * gridW, 0f);
             j++;
             if (j == sqr) {
@@ -177,8 +183,8 @@ public class GLAWTFont extends GLFont {
         }
 
         g2d.dispose();
-        
-        if(FONT_TO_FILE){
+
+        if (FONT_TO_FILE) {
             try {
                 ImageIO.write(img, "PNG", new File("font.png"));
             } catch (IOException ex) {
@@ -186,7 +192,7 @@ public class GLAWTFont extends GLFont {
             }
         }
         return img;
-    }    
+    }
 
     @Override
     public final void init() {
@@ -206,14 +212,19 @@ public class GLAWTFont extends GLFont {
 
         pBuf.flip();
 
-        
-        return this.texture.new UpdateImage2DTask(GLTools.recommendedMipmaps(texWidth, texHeight), 0, 0, texWidth, texHeight, GL_BGRA, GLType.GL_UNSIGNED_BYTE, pBuf);
+        return GLTask.join(
+                this.texture.new AllocateImage2DTask(1, GLTextureInternalFormat.GL_RGBA8, texWidth, texHeight),
+                this.texture.new SetAttributesTask(new GLTextureParameters()
+                        .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
+                        .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE)),
+                this.texture.new UpdateImage2DTask(0, 0, 0, texWidth, texHeight, GL_BGRA, GLType.GL_UNSIGNED_BYTE, pBuf)
+        );
     }
 
     @Override
     public GLFontMetrics getMetrics() {
         return getFontMetrics(this.font, this.supportedGlyphs);
-    }    
+    }
 
     /**
      * Retrieves the metrics object associated with the given AWT Font object.
@@ -234,10 +245,10 @@ public class GLAWTFont extends GLFont {
             return metrics;
         }
     }
-    
+
     @Override
     public boolean equals(Object other) {
-        if(this == other) {
+        if (this == other) {
             return true;
         } else if (other instanceof GLAWTFont) {
             return this.font.equals(((GLAWTFont) other).font);

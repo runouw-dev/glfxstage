@@ -8,5 +8,5 @@ out vec4 fColor;
 uniform sampler2D uFont;
 
 void main() {
-    fColor = fCol * texture(uFont, fUVs);
+    fColor = fCol * texture(uFont, fUVs);        
 }
