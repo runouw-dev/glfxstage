@@ -13,6 +13,18 @@
     
         <import file="nbproject/build-impl.xml"/>
     
+    <condition property="isLinux">
+        <os family="unix"/>
+    </condition>
+    
+    <condition property="isWindows">
+        <os family="windows"/>
+    </condition>
+        
+    <condition property="lwjgl.exists">
+        <available file="obj/lwjgl/300a.version"/>
+    </condition>    
+        
     <condition property="gloop.exists">
         <available file="obj/gloop/nightly.version"/>        
     </condition>    
@@ -31,6 +43,62 @@
         <touch file="obj/gloop/nightly.version"/>
     </target>        
     
+    <target name="-check-deps-lwjgl" unless="lwjgl.exists">
+        <mkdir dir="obj/lwjgl"/>
+        
+        <get
+            dest="obj/lwjgl/"
+            src="${libs.lwjgl.lwjgl.jar}"/>
+        
+        <touch file="obj/lwjgl/300a.version"/>
+    </target>
+    
+    <target name="-check-deps-lwjgl-natives-linux" if="isLinux">
+        <mkdir dir="obj/lwjgl/natives"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.liblwjgl.so}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.liblwjgl32.so}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.libopenal.so}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.libopenal32.so}"/>                
+    </target>
+    
+    <target name="-check-deps-lwjgl-natives-windows" if="isWindows">
+        <mkdir dir="obj/lwjgl/natives"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.lwjgl.dll}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.lwjgl32.dll}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.OpenAL.dll}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.OpenAL32.dll}"/>
+    </target>
+    
+    <target name="-clear-deps-lwjgl" if="lwjgl.exists">
+        <delete>
+            <fileset dir="obj/lwjgl" includes="300a.version"/>
+        </delete>
+    </target>
+    
     <target name="-clear-deps-gloop">
         <delete>
             <fileset dir="obj/gloop/" includes="nightly.version"/>
@@ -45,9 +113,10 @@
     </target>
     
     <target name="clear-deps-nightly" depends="-clear-deps-gloop"/>
-    <target name="clear-deps" depends="clear-deps-nightly"/>
-    <target name="check-deps" depends="-check-deps-gloop"/>
-    <target name="-pre-compile" depends="check-deps"/>
+    <target name="check-deps-natives" depends="-check-deps-lwjgl-natives-linux, -check-deps-lwjgl-natives-windows"/>
+    <target name="clear-deps" depends="clear-deps-nightly, -clear-deps-lwjgl"/>
+    <target name="check-deps" depends="-check-deps-gloop, -check-deps-lwjgl"/>
+    <target name="-pre-compile" depends="check-deps,check-deps-natives"/>
     <target name="-post-clean" depends="clear-deps-nightly"/>
     
     <target name="-post-jar" depends="package-sources,package-doc">
