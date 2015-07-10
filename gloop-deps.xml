@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Gloop-deps" default="default" basedir=".">
+    <description>Gets latest version of gloop, lwjgl and lwjgl natives</description>
+    
+    <property file="gloop-deps.properties"/>
+    
+    <condition property="isLinux">
+        <os family="unix"/>
+    </condition>
+    
+    <condition property="isWindows">
+        <os family="windows"/>
+    </condition>
+    
+    <condition property="lwjgl.exists">
+        <available file="obj/lwjgl/300a.version"/>
+    </condition>
+    
+    <condition property="gloop.exists">
+        <available file="obj/gloop/nightly.version"/>        
+    </condition>
+    
+    <target name="-check-deps-gloop" unless="gloop.exists">
+        <mkdir dir="obj/gloop"/>
+        
+        <get
+            dest="obj/gloop/"
+            src="${libs.gloop.gloop-vectors.jar}"/>
+        
+        <get
+            dest="obj/gloop/"
+            src="${libs.gloop.gloop-core.jar}"/>            
+        
+        <touch file="obj/gloop/nightly.version"/>
+    </target>
+    
+    <target name="-check-deps-lwjgl" unless="lwjgl.exists">
+        <mkdir dir="obj/lwjgl/"/>
+        
+        <get
+            dest="obj/lwjgl/"
+            src="${libs.lwjgl.lwjgl.jar}"/>
+        
+        <touch file="obj/lwjgl/300a.version"/>
+    </target>
+    
+    <target name="-check-deps-lwjgl-natives-linux" if="isLinux">
+        <mkdir dir="obj/lwjgl/natives/"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.liblwjgl.so}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.liblwjgl32.so}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.libopenal.so}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.libopenal32.so}"/>                
+    </target>
+    
+    <target name="-check-deps-lwjgl-natives-windows" if="isWindows">
+        <mkdir dir="obj/lwjgl/natives/"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.lwjgl.dll}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.lwjgl32.dll}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.OpenAL.dll}"/>
+        
+        <get
+            dest="obj/lwjgl/natives/"
+            src="${libs.lwjgl.OpenAL32.dll}"/>
+    </target>
+    
+    <target name="-clear-deps-gloop" if="gloop.exists">
+        <delete>
+            <fileset dir="obj/gloop/" includes="nightly.version"/>
+        </delete>
+    </target>
+    
+    <target name="-clear-deps-lwjgl" if="lwjgl.exists">
+        <delete>
+            <fileset dir="obj/lwjgl/" includes="300a.version"/>
+        </delete>
+    </target>
+    
+    <target name="check-deps-lwjgl-natives" depends="-check-deps-lwjgl-natives-linux, -check-deps-lwjgl-natives-windows"/>
+    <target name="check-deps-gloop" depends="-check-deps-gloop,-check-deps-lwjgl"/>
+    <target name="clear-deps-gloop" depends="-clear-deps-gloop,-clear-deps-lwjgl"/>
+</project>
