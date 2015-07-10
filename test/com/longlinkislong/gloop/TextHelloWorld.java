@@ -12,7 +12,7 @@ import java.awt.Font;
  *
  * @author zmichaels
  */
-public class TextTest {
+public class TextHelloWorld {
 
     final int width = 640;
     final int height = 480;
@@ -26,7 +26,7 @@ public class TextTest {
                     GLBlendFunc.GL_SRC_ALPHA, GLBlendFunc.GL_ONE_MINUS_SRC_ALPHA,
                     GLBlendFunc.GL_SRC_ALPHA, GLBlendFunc.GL_ONE_MINUS_SRC_ALPHA);
 
-    public TextTest() {
+    public TextHelloWorld() {
         this.clear.clear();
         this.blend.applyBlending();
 
@@ -44,6 +44,6 @@ public class TextTest {
     }
 
     public static void main(String[] args) {
-        new TextTest();
+        new TextHelloWorld();
     }
 }
