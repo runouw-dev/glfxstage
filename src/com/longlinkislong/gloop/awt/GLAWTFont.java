@@ -10,8 +10,6 @@ import com.longlinkislong.gloop.GLFont;
 import com.longlinkislong.gloop.GLFontGlpyhSet;
 import com.longlinkislong.gloop.GLFontMetrics;
 import com.longlinkislong.gloop.GLTask;
-import com.longlinkislong.gloop.GLTexture;
-import com.longlinkislong.gloop.GLTextureFormat;
 import static com.longlinkislong.gloop.GLTextureFormat.GL_BGRA;
 import com.longlinkislong.gloop.GLTextureInternalFormat;
 import com.longlinkislong.gloop.GLTextureMagFilter;
@@ -19,7 +17,6 @@ import com.longlinkislong.gloop.GLTextureMinFilter;
 import com.longlinkislong.gloop.GLTextureParameters;
 import com.longlinkislong.gloop.GLTextureWrap;
 import com.longlinkislong.gloop.GLThread;
-import com.longlinkislong.gloop.GLTools;
 import com.longlinkislong.gloop.GLType;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -38,7 +35,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.IntStream;
 import javax.imageio.ImageIO;
 
 /**
@@ -213,11 +209,11 @@ public class GLAWTFont extends GLFont {
         pBuf.flip();
 
         return GLTask.join(
-                this.texture.new AllocateImage2DTask(1, GLTextureInternalFormat.GL_RGBA8, texWidth, texHeight),
+                this.texture.new AllocateImage2DTask(1, GLTextureInternalFormat.GL_RGBA8, texWidth, texHeight),                
+                this.texture.new UpdateImage2DTask(0, 0, 0, texWidth, texHeight, GL_BGRA, GLType.GL_UNSIGNED_BYTE, pBuf),
                 this.texture.new SetAttributesTask(new GLTextureParameters()
                         .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
-                        .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE)),
-                this.texture.new UpdateImage2DTask(0, 0, 0, texWidth, texHeight, GL_BGRA, GLType.GL_UNSIGNED_BYTE, pBuf)
+                        .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE))
         );
     }
 

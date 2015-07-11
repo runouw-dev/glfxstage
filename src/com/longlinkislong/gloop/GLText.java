@@ -13,8 +13,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
 
 /**
  * An object that represents visible text.
