@@ -1,0 +1,32 @@
+artifactory {
+    contextUrl = "${artifactoryContextURL}"
+    publish {
+        repository {
+            repoKey = "${artifactoryPublishRepo}"
+            username = "${artifactoryUser}"
+            password = "${artifactoryPassword}"
+            maven = true
+        }
+        defaults {
+            publications ('mavenJava')
+        }
+    }
+    resolve {
+        repository {
+            repoKey = "${artifactoryResolveRepo}"
+            username = "${artifactoryUser}"
+            password = "${artifactoryPassword}"
+            maven = true
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = "${group}"
+            version = "${version}"
+        }
+    }
+}

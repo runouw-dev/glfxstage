@@ -1,0 +1,20 @@
+plugins {
+    id 'com.jfrog.artifactory' version '3.1.1'
+}
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply from: 'artifactory-template.gradle'
+
+sourceCompatibility = '1.8'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+repositories {
+    mavenCentral()
+    maven { url "${artifactoryContextURL}/libs-snapshot" }
+}
+
+dependencies {
+    compile "com.longlinkislong:gloop:${version}"
+    
+    testCompile group: 'junit', name: 'junit', version: '4.10'
+}
