@@ -36,7 +36,7 @@ public class MultiPingPong<InnerType> {
             throw new IllegalStateException("PingPongQueue requires at least 2 inner objects!");
         }
 
-        this.objQueue = new ArrayDeque(count);
+        this.objQueue = new ArrayDeque<>(count);
         this.swapsUntilDepleted = count;
 
         for (int i = 0; i < count; i++) {

@@ -7,7 +7,6 @@ package com.longlinkislong.gloop.awt;
 
 import com.longlinkislong.gloop.GLFontGlpyhSet;
 import com.longlinkislong.gloop.GLFontMetrics;
-import com.longlinkislong.gloop.GLTools;
 import java.awt.Canvas;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -80,7 +79,7 @@ public class GLAWTFontMetrics implements GLFontMetrics {
 
     @Override
     public float getLineHeight() {
-        return (int) this.metrics.getHeight();
+        return this.metrics.getHeight();
     }
 
     @Override

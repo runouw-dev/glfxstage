@@ -1,6 +1,4 @@
-plugins {
-    id 'com.jfrog.artifactory' version '3.1.1'
-}
+plugins { id 'com.jfrog.artifactory' version '3.1.1' }
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 apply from: 'artifactory-template.gradle'
@@ -18,3 +16,5 @@ dependencies {
     
     testCompile group: 'junit', name: 'junit', version: '4.10'
 }
+
+compileJava.options.compilerArgs = ['-Xlint:all']
