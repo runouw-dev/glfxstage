@@ -1,175 +1,55 @@
+artifactory {
+    contextUrl = "http://longlinkislong.com:8080/artifactory/"
+    publish {
+        repository {
+            repoKey = "libs-${buildType}-local"
+            username = "${artifactoryUser}"
+            password = "${artifactoryPassword}"
+            maven = true
+        }
+        defaults {
+            publications ('mavenJava')
+        }
+    }    
+}
+ 
 publishing {
     publications {
-        snapshot(MavenPublication) {
+        mavenJava(MavenPublication) {
             from components.java
             groupId = "${group}"
-            version = getSnapshotVersion()
+            
+            if(buildType == 'release') {
+                def versionPropsFile = new File('version.properties')
+    
+                if(!versionPropsFile.exists()) {
+                    def versionProps = new Properties()
+        
+                    versionProps['major'] = '1'
+                    versionProps['minor'] = '0'
+                    versionProps['revision'] = '0'
+        
+                    versionProps.store(versionPropsFile.newWriter(), null)
+                    
+                    version = "1.0r0"
+                } else if(versionPropsFile.canRead()) {
+                    def versionProps = new Properties()
+        
+                    versionProps.load(new FileInputStream(versionPropsFile))
+        
+                    def major = versionProps['major']
+                    def minor = versionProps['minor']
+                    def revision = versionProps['revision'].toInteger() + 1
+                    
+                    versionProps['revision'] = revision.toString()
+                    
+                    versionProps.store(versionPropsFile.newWriter(), null)
+        
+                    version = "${major}.${minor}r${revision}"
+                }
+            } else {
+                version = new Date().format('yy.MM') + "-SNAPSHOT"
+            }                        
         }
-        release(MavenPublication) {
-            from components.java
-            groupId = "${group}"
-            version = getReleaseVersion()
-        }
     }
-}
-
-artifactoryPublish {
-    contextUrl = "${artifactoryContextURL}"
-    publications("${buildType}")
-    
-    clientConfig.publisher.username = "${artifactoryUser}"
-    clientConfig.publisher.password = "${artifactoryPassword}"
-    
-    switch("${buildType}") {
-    case 'release':        
-        clientConfig.publisher.repoKey = artifactoryReleaseRepo        
-        break;
-    case 'snapshot':
-        clientConfig.publisher.repoKey = artifactorySnapshotRepo
-        break;
-    default:
-        throw new RuntimeException("Invalid buildType: ${buildType}")        
-    }
-}
-
-task incrementMajor << {
-    def versionPropsFile = file('version.properties')
-    
-    if(!versionPropsFile.exists()) {
-        def versionProps = new Properties()
-        
-        versionProps['major'] = '1'
-        versionProps['minor'] = '0'
-        versionProps['revision'] = '0'
-        
-        versionProps.store(versionPropsFile.newWriter(), null)
-        
-        println 'Version is now: 1.0r0'
-    }
-    if(versionPropsFile.canRead()) {
-        def Properties versionProps = new Properties()
-        
-        versionProps.load(new FileInputStream(versionPropsFile))
-        
-        def major = versionProps['major'].toInteger() + 1
-        def minor = versionProps['minor']
-        def revision = versionProps['revision']
-        
-        versionProps['major'] = major.toString()
-        versionProps['minor'] = '0'
-        versionProps['revision'] = '0'
-        
-        versionProps.store(versionPropsFile.newWriter(), null) 
-        
-        println "Version is now: ${major}.${minor}r${revision}"
-    } else {
-        throw new RuntimeException("Could not read version.properties!")
-    }
-}
-
-task incrementMinor << {
-    def versionPropsFile = file('version.properties')
-    
-    if(!versionPropsFile.exists()) {
-        def versionProps = new Properties()
-        
-        versionProps['major'] = '1'
-        versionProps['minor'] = '0'
-        versionProps['revision'] = '0'
-        
-        versionProps.store(versionPropsFile.newWriter(), null)
-        
-        println "Version is now: 1.0r0"
-    } else if(versionPropsFile.canRead()) {
-        def Properties versionProps = new Properties()
-        
-        versionProps.load(new FileInputStream(versionPropsFile))
-        
-        def major = versionProps['major']
-        def minor = versionProps['minor'].toInteger() + 1
-        def revision = versionProps['revision']
-        
-        versionProps['major'] = major.toString()
-        versionProps['minor'] = minor.toString()
-        versionProps['revision'] = '0'
-        
-        versionProps.store(versionPropsFile.newWriter(), null) 
-        
-        println "Version is now: ${major}.${minor}r${revision}"
-    } else {
-        throw new RuntimeException("Could not read version.properties!")
-    }
-}
-
-def getVersion() {
-    if(buildType.equalsIgnoreCase('release')) {
-        def versionPropsFile = file('version.properties')
-        
-        if(!versionPropsFile.exists()) {
-            def versionProps = new Properties()
-            
-            versionProps['major'] = '1'
-            versionProps['minor'] = '0'
-            versionProps['revision'] = '0'
-            
-            versionProps.store(versionPropsFile.newWriter(), null)
-            return '1.0r0'
-        } else if(versionPropsFile.canRead()) {
-            def versionProps = new Properties()
-            
-            versionProps.load(new FileInputStream(versionPropsFile))
-            
-            def major = versionProps['major']
-            def minor = versionProps['minor']
-            def revision = versionProps['revision']
-            
-            return "${major}.${minor}r${revision}"
-        } else {
-            throw new RuntimeException("Could not read version.properties!")
-        }
-    } else {
-        return getSnapshotVersion()
-    }
-}
-
-def getReleaseVersion() {
-    def versionPropsFile = file('version.properties')
-    
-    if(!versionPropsFile.exists()) {
-        def versionProps = new Properties()
-        
-        versionProps['major'] = '1'
-        versionProps['minor'] = '0'
-        versionProps['revision'] = '0'
-        
-        versionProps.store(versionPropsFile.newWriter(), null)
-        
-        return '1.0r0'
-    } else if(versionPropsFile.canRead()) {
-        def versionProps = new Properties()
-        
-        versionProps.load(new FileInputStream(versionPropsFile))
-        
-        def major = versionProps['major']
-        def minor = versionProps['minor']
-        def revision = versionProps['revision'].toInteger()
-        
-        if(buildType.equalsIgnoreCase('release')) {
-            revision = revision + 1
-            
-            versionProps['major'] = major
-            versionProps['minor'] = minor
-            versionProps['revision'] = revision.toString()
-            
-            versionProps.store(versionPropsFile.newWriter(), null) 
-        }                                        
-        
-        return "${major}.${minor}r${revision}"
-    } else {
-        throw new RuntimeException("Could not read version.properties!")
-    }
-}
-
-def getSnapshotVersion() {    
-    return new Date().format('yy-MM') + "-SNAPSHOT"
 }
