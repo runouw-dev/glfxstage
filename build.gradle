@@ -1,4 +1,15 @@
-plugins { id 'com.jfrog.artifactory' version '3.1.1' }
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1'
+    }
+}
+
+apply plugin: 'com.jfrog.artifactory'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 apply from: 'artifactory-template.gradle'
@@ -8,14 +19,13 @@ sourceCompatibility = '1.8'
 
 repositories {
     mavenCentral()
-    maven { url "http://longlinkislong.com:8080/artifactory/libs-snapshot" }
-    maven { url "http://longlinkislong.com:8080/artifactory/libs-release" }
+    maven { url 'http://longlinkislong.com:8080/artifactory/libs-snapshot' }
+    maven { url 'http://longlinkislong.com:8080/artifactory/libs-release' }
 }
 
 dependencies {    
-    compile "com.longlinkislong:gloop:1.0r1"
-    
-    testCompile group: 'junit', name: 'junit', version: '4.10'
+    compile 'com.longlinkislong:gloop:1.0r1'
+    testCompile 'junit:junit:4.10'    
 }
 
 compileJava.options.compilerArgs = ['-Xlint:all']

@@ -1,16 +1,20 @@
-artifactory {
-    contextUrl = "http://longlinkislong.com:8080/artifactory/"
-    publish {
-        repository {
-            repoKey = "libs-${buildType}-local"
-            username = "${artifactoryUser}"
-            password = "${artifactoryPassword}"
-            maven = true
-        }
-        defaults {
-            publications ('mavenJava')
-        }
-    }    
+if(!project.hasProperty('artifactoryUser') || !project.hasProperty('artifactoryPassword')) {
+    System.err.println 'artifactoryUser or artifactoryPassword is not defined! artifactoryPublish will be disabled.'   
+} else {
+    artifactory {
+        contextUrl = 'http://longlinkislong.com:8080/artifactory/'
+        publish {
+            repository {
+                repoKey = "libs-${buildType}-local"
+                username = "${artifactoryUser}"
+                password = "${artifactoryPassword}"
+                maven = true
+            }
+            defaults {
+                publications ('mavenJava')
+            }
+        }    
+    }
 }
  
 publishing {
@@ -19,7 +23,7 @@ publishing {
             from components.java
             groupId = "${group}"
                         
-            def versionPropsFile = new File('version.properties')
+            def versionPropsFile = new File("${projectDir}/version.properties")
     
             if(!versionPropsFile.exists()) {
                 def versionProps = new Properties()
@@ -59,7 +63,7 @@ publishing {
 }
 
 task incrementMajor << {
-    def versionPropsFile = new File('version.properties')
+    def versionPropsFile = new File("${projectDir}/version.properties")
     def versionProps = new Properties()
     
     if(!versionPropsFile.exists()) {
@@ -76,7 +80,7 @@ task incrementMajor << {
 }
 
 task incrementMinor << {
-    def versionPropsFile = new File('version.properties')
+    def versionPropsFile = new File("${projectDir}/version.properties")
     def versionProps = new Properties()
     
     if(!versionPropsFile.exists()) {
@@ -92,7 +96,7 @@ task incrementMinor << {
 }
 
 task version << {
-    def versionPropsFile = new File('version.properties')
+    def versionPropsFile = new File("${projectDir}/version.properties")
     def versionProps = new Properties()
     
     if(!versionPropsFile.exists()) {
