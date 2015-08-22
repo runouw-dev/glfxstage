@@ -49,6 +49,11 @@ public abstract class GLUITextField extends GLUIComponent {
     private Consumer<String> onComplete;
     private volatile String currentText = "";
 
+    @Override
+    public final GLVec2F getRelativePosition() {
+        return this.position.copyTo(Vectors.DEFAULT_FACTORY);
+    }
+    
     /**
      * Constructs a new GLUITextField on the default OpenGL thread.
      *
@@ -140,7 +145,7 @@ public abstract class GLUITextField extends GLUIComponent {
 
     @Override
     protected void drawComponent(GLMat4F projection, GLMat4F translation) {
-        if (this.keyPoll != null) {
+        if (this.isSelected() && this.keyPoll != null) {
             final Character c = this.keyPoll.get();
 
             if (c != null) {
@@ -156,6 +161,10 @@ public abstract class GLUITextField extends GLUIComponent {
                     System.out.printf("Invalid character: [value=%d]\n", c);
                 }
             }
+        }
+        
+        if(!this.isVisible()) {
+            return;
         }
 
         final GLMat4F tr = GLMat4F.translation(this.position.x(), this.position.y()).multiply(translation);

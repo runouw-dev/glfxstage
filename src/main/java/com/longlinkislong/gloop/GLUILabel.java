@@ -16,6 +16,10 @@ public abstract class GLUILabel extends GLUIComponent {
     private final String text;
     private final GLVec2F position = GLVec2F.create().asStaticVec();
 
+    @Override
+    public final GLVec2F getRelativePosition() {
+        return this.position.copyTo(Vectors.DEFAULT_FACTORY);
+    }
     /**
      * Constructs a new Label object on the default OpenGL thread.
      *
@@ -54,6 +58,10 @@ public abstract class GLUILabel extends GLUIComponent {
 
     @Override
     protected void drawComponent(final GLMat4F projection, final GLMat4F translation) {
+        if(!this.isVisible()) {
+            return;
+        }
+        
         final GLMat4F tr = GLMat4F.translation(this.position.x(), this.position.y()).multiply(translation);
         final GLMat4F mvp = tr.multiply(projection);
 
