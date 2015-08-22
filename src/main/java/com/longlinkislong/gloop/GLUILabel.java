@@ -54,8 +54,8 @@ public abstract class GLUILabel extends GLUIComponent {
 
     @Override
     protected void drawComponent(final GLMat4F projection, final GLMat4F translation) {
-        final GLMat4F tr = GLMat4F.translation(this.position.x(), this.position.y());
-        final GLMat4F mvp = projection.multiply(translation).multiply(tr);
+        final GLMat4F tr = GLMat4F.translation(this.position.x(), this.position.y()).multiply(translation);
+        final GLMat4F mvp = tr.multiply(projection);
 
         this.drawLabel(mvp, this.text);
     }

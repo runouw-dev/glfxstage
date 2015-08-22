@@ -158,8 +158,8 @@ public abstract class GLUITextField extends GLUIComponent {
             }
         }
 
-        final GLMat4F tr = GLMat4F.translation(this.position.x(), this.position.y());
-        final GLMat4F mvp = projection.multiply(translation).multiply(tr);
+        final GLMat4F tr = GLMat4F.translation(this.position.x(), this.position.y()).multiply(translation);
+        final GLMat4F mvp = tr.multiply(projection);
 
         this.drawTextField(mvp, this.currentText);
     }

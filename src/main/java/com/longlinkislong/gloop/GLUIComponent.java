@@ -80,8 +80,8 @@ public abstract class GLUIComponent extends GLObject {
 
         @Override
         public void run() {
-            final GLThread thread = GLThread.getCurrent().orElseThrow(GLException::new);
-            final GLMat4F pr = GLMat4F.ortho(0, 1f, 1f, 0f, 0.1f, 1f).asStaticMat();
+            final GLThread thread = GLThread.getCurrent().orElseThrow(GLException::new);            
+            final GLMat4F pr = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
             final GLMat4F tr = GLMat4F.create();
 
             GLUIComponent.this.drawComponent(pr, tr);
