@@ -14,36 +14,37 @@ package com.longlinkislong.gloop;
 public abstract class GLUILabel extends GLUIComponent {
 
     private final String text;
-    private final GLVec2F position = GLVec2F.create().asStaticVec();
+    private final GLMat4F transformation = GLMat4F.create().asStaticMat();
 
     @Override
-    public final GLVec2F getRelativePosition() {
-        return this.position.copyTo(Vectors.DEFAULT_FACTORY);
+    public final GLMat4F getTransformation() {
+        return this.transformation.copyTo(Matrices.DEFAULT_FACTORY);
     }
+
     /**
      * Constructs a new Label object on the default OpenGL thread.
      *
-     * @param position the position of the GLUILabel.
      * @param text the text
+     * @param transformation the transformation matrix for the label.
      * @since 15.08.21
      */
-    public GLUILabel(final GLVec2F position, final CharSequence text) {
-        this(GLThread.getDefaultInstance(), position, text);
+    public GLUILabel(final CharSequence text, final GLMat4F transformation) {
+        this(GLThread.getDefaultInstance(), text, transformation);
     }
 
     /**
      * Constructs a new Label object on the specified thread.
      *
      * @param thread the OpenGL thread to create the text object on.
-     * @param position the position of the label relative to its parent.
      * @param text the text to display.
+     * @param transformation the transformation matrix for the label.
      * @since 15.08.21
      */
-    public GLUILabel(final GLThread thread, final GLVec2F position, final CharSequence text) {
+    public GLUILabel(final GLThread thread, final CharSequence text, final GLMat4F transformation) {
         super(thread);
 
         this.text = text.toString();
-        this.position.set(position);
+        this.transformation.set(transformation);
     }
 
     /**
@@ -58,12 +59,11 @@ public abstract class GLUILabel extends GLUIComponent {
 
     @Override
     protected void drawComponent(final GLMat4F projection, final GLMat4F translation) {
-        if(!this.isVisible()) {
+        if (!this.isVisible()) {
             return;
         }
         
-        final GLMat4F tr = GLMat4F.translation(this.position.x(), this.position.y()).multiply(translation);
-        final GLMat4F mvp = tr.multiply(projection);
+        final GLMat4F mvp = this.transformation.multiply(translation).multiply(projection);
 
         this.drawLabel(mvp, this.text);
     }
@@ -76,5 +76,10 @@ public abstract class GLUILabel extends GLUIComponent {
      */
     public String getText() {
         return this.text;
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("Sample Label: [%s]", this.getText());
     }
 }

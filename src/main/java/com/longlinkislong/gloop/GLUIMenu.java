@@ -20,30 +20,30 @@ import java.util.Optional;
  */
 public abstract class GLUIMenu extends GLUIComponent {
 
-    private final GLVec2F position = GLVec2F.create().asStaticVec();
+    private final GLMat4F transformation = GLMat4F.create().asStaticMat();
     private final List<GLUIComponent> children = new ArrayList<>();
 
     /**
      * Constructs a new Menu object on the default
-     *
-     * @param pos the position for the menu.
+     *     
+     * @param transformation the transformation matrix for the menu.
      * @since 15.08.21
      */
-    public GLUIMenu(final GLVec2F pos) {
-        this(GLThread.getDefaultInstance(), pos);
+    public GLUIMenu(final GLMat4F transformation) {
+        this(GLThread.getDefaultInstance(), transformation);
     }
 
     /**
      * Constructs a new Menu object on the specified OpenGL thread.
      *
      * @param thread the OpenGL thread.
-     * @param pos the position of the menu.
+     * @param transformation the transformation matrix for the menu.
      * @since 15.08.21
      */
-    public GLUIMenu(final GLThread thread, final GLVec2F pos) {
+    public GLUIMenu(final GLThread thread, final GLMat4F transformation) {
         super(thread);
 
-        this.position.set(pos);
+        this.transformation.set(transformation);
     }
 
     /**
@@ -61,7 +61,7 @@ public abstract class GLUIMenu extends GLUIComponent {
             return;
         }
 
-        final GLMat4F tr = GLMat4F.translation(position.x(), position.y()).multiply(translation);
+        final GLMat4F tr = this.transformation.multiply(translation);
         final GLMat4F mvp = tr.multiply(projection);
 
         this.drawMenu(mvp);
@@ -70,8 +70,8 @@ public abstract class GLUIMenu extends GLUIComponent {
     }
     
     @Override
-    public final GLVec2F getRelativePosition() {
-        return this.position.copyTo(Vectors.DEFAULT_FACTORY);
+    public GLMat4F getTransformation() {
+        return this.transformation.copyTo(Matrices.DEFAULT_FACTORY);
     }
 
     /**

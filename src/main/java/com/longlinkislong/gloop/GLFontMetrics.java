@@ -59,6 +59,22 @@ public interface GLFontMetrics {
     public float getCharWidth(char c);
     
     /**
+     * Retrieves an estimation on the length of a string in pixels.
+     * @param string the string to calculate the length.
+     * @return the length of the string in pixels.
+     * @since 15.08.24
+     */
+    default float getStringWidth(final CharSequence string) {
+        float width = 0f;
+        
+        for(int i = 0; i < string.length(); i++) {
+            width += this.getCharWidth(string.charAt(i));
+        }
+        
+        return width;
+    }
+    
+    /**
      * Retrieves the width of a character in pixels.
      *
      * @param c the character

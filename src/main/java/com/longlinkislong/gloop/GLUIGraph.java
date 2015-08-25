@@ -8,7 +8,6 @@ package com.longlinkislong.gloop;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * A graph structure that manages selection of GLUIComponents.
@@ -19,8 +18,7 @@ import java.util.function.Function;
 public class GLUIGraph {
 
     private final Node root = new Node(null);
-    private final Map<GLUIComponent, Node> nodes = new HashMap<>();
-    private final Map<GLVec2D, Node> nodesByPosition = new HashMap<>();
+    private final Map<GLUIComponent, Node> nodes = new HashMap<>();    
     private Node currentSelected = root;
 
     /**
@@ -41,29 +39,10 @@ public class GLUIGraph {
                 .stream()
                 .map(node -> node.neighbors)
                 .forEach(Map::clear);
-        
-        this.nodesByPosition.values()
-                .stream()
-                .map(node -> node.neighbors)
-                .forEach(Map::clear);
-        
-        this.nodes.clear();
-        this.nodesByPosition.clear();
+                        
+        this.nodes.clear();        
     }        
-
-    /**
-     * Registers a node by its absolute position. This should be used if
-     * selecting by mouse is possible.
-     *
-     * @param c the component to register
-     * @param pos the position of the component.
-     * @since 15.08.21
-     */
-    public void setAbsolutePosition(final GLUIComponent c, final GLVec2 pos) {
-        final Node node = this.nodes.containsKey(c) ? this.nodes.get(c) : new Node(c);
-
-        this.nodesByPosition.put(pos.asGLVec2D().asStaticVec(), node);
-    }
+  
 
     /**
      * Adds an edge between two components. This should be used if selecting by
@@ -93,44 +72,7 @@ public class GLUIGraph {
             case MONO_DIRECTIONAL:
                 nFrom.neighbors.put(dir.asStaticVec(), nTo);
         }
-    }
-
-    /**
-     * Moves the selector near the specified position.
-     *
-     * @param position the position to move the selector
-     * @param selectTest function used to test if the component can be selected.
-     * @since 15.08.21
-     */
-    public void moveSelectorNearPosition(
-            final GLVec2 position,
-            final Function<GLUIComponent, Boolean> selectTest) {
-
-        final GLVec2D p = position.asGLVec2D().asStaticVec();
-
-        double closestDistance = Double.POSITIVE_INFINITY;
-        Node closestNode = null;
-
-        for (GLVec2D vec : this.nodesByPosition.keySet()) {
-            final double distance = vec.minus(p).length();
-
-            if (distance < closestDistance) {
-                closestNode = this.nodesByPosition.get(vec);
-                closestDistance = distance;
-            }
-        }
-
-        if (closestNode != null) {
-            this.currentSelected = closestNode;
-
-            final GLUIComponent component = closestNode.component;
-
-            if (component != null && selectTest.apply(component)) {
-                closestNode.component.select();
-                this.currentSelected = closestNode;
-            }
-        }
-    }
+    }    
 
     /**
      * Moves the selector in the given direction.
@@ -154,11 +96,15 @@ public class GLUIGraph {
         }
 
         if (closestNeighbor != null) {
-            this.currentSelected = closestNeighbor;
-
+            if(this.currentSelected.component != null) {
+                this.currentSelected.component.deselect();
+            }            
+                        
             if (closestNeighbor.component != null) {
                 closestNeighbor.component.select();
             }
+            
+            this.currentSelected = closestNeighbor;
         }
     }
 

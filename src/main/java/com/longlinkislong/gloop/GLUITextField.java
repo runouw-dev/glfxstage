@@ -43,38 +43,38 @@ public abstract class GLUITextField extends GLUIComponent {
         }
     }
 
-    private final GLVec2F position = GLVec2F.create().asStaticVec();
+    private final GLMat4F transformation = GLMat4F.create().asStaticMat();
     private final Deque<Character> input = new LinkedList<>();
     private Supplier<Character> keyPoll;
     private Consumer<String> onComplete;
     private volatile String currentText = "";
 
     @Override
-    public final GLVec2F getRelativePosition() {
-        return this.position.copyTo(Vectors.DEFAULT_FACTORY);
+    public GLMat4F getTransformation() {
+        return this.transformation.copyTo(Matrices.DEFAULT_FACTORY);
     }
     
     /**
      * Constructs a new GLUITextField on the default OpenGL thread.
-     *
-     * @param pos the position of the GLUITextField.
+     *     
+     * @param transformation the transformation matrix for the text field.
      * @since 15.08.21
      */
-    public GLUITextField(final GLVec2F pos) {
-        this(GLThread.getDefaultInstance(), pos);
+    public GLUITextField(final GLMat4F transformation) {
+        this(GLThread.getDefaultInstance(), transformation);
     }
 
     /**
      * Constructs a new GLUITextField on the specified OpenGL thread.
      *
-     * @param thread the OpenGL thread.
-     * @param pos the position of the GLUITextField object.
+     * @param thread the OpenGL thread.     
+     * @param transformation the transformation matrix for the text field.    
      * @since 15.08.21
      */
-    public GLUITextField(final GLThread thread, final GLVec2F pos) {
+    public GLUITextField(final GLThread thread, final GLMat4F transformation) {
         super(thread);
 
-        this.position.set(pos);
+        this.transformation.set(transformation);
     }
 
     /**
@@ -167,7 +167,7 @@ public abstract class GLUITextField extends GLUIComponent {
             return;
         }
 
-        final GLMat4F tr = GLMat4F.translation(this.position.x(), this.position.y()).multiply(translation);
+        final GLMat4F tr = this.transformation.multiply(translation);
         final GLMat4F mvp = tr.multiply(projection);
 
         this.drawTextField(mvp, this.currentText);
