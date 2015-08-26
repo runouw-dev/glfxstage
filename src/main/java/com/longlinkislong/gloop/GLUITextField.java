@@ -147,15 +147,15 @@ public abstract class GLUITextField extends GLUIComponent {
     protected void drawComponent(GLMat4F projection, GLMat4F translation) {
         if (this.isSelected() && this.keyPoll != null) {
             final Character c = this.keyPoll.get();
-
-            if (c != null) {
+           
+            if (c != null) {                
                 if (/* backspace */c == 8) {
-                    this.input.pop();
+                    this.input.pollLast();
                     this.rebuildText();
                 } else if (/* return */c == '\r' || c == '\n') {
                     this.onComplete.accept(this.currentText);
                 } else if (VALID_CHARS.contains(c)) {
-                    this.input.push(c);
+                    this.input.offerLast(c);
                     this.rebuildText();
                 } else {
                     System.out.printf("Invalid character: [value=%d]\n", c);
