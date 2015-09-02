@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {    
-    compile 'com.longlinkislong:gloop:1.0r1'
+    compile 'com.longlinkislong:gloop:1.0r3'
     testCompile 'junit:junit:4.10'    
 }
 
