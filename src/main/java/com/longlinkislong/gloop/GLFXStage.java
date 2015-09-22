@@ -22,6 +22,19 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import org.lwjgl.glfw.GLFW;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_END;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_HOME;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_INSERT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
 
 /**
  * GLFXStage is an OpenGL object that can contain and render JavaFX scene
@@ -316,14 +329,14 @@ public class GLFXStage extends GLObject {
     }
 
     private void updateTexture() {
-        if (this.emScene != null) {            
+        if (this.emScene != null) {
             this.tBuffer.rewind();
-            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);            
-            
+            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
+
             this.texture.updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer);
             this.texture.setAttributes(new GLTextureParameters()
-                        .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
-                        .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
+                    .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
+                    .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
         }
     }
 
@@ -343,7 +356,7 @@ public class GLFXStage extends GLObject {
      * @since 15.09.21
      */
     public GLTask newDrawTask() {
-        final GLTask bindTex = GLTask.create(() -> {            
+        final GLTask bindTex = GLTask.create(() -> {
             this.texture.bind(0);
         });
 
@@ -364,13 +377,54 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void keyActionPerformed(GLWindow glw, int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers) {
+            int keyId = -1;
+
+            switch (key) {
+                case GLFW_KEY_BACKSPACE:
+                    keyId = com.sun.glass.events.KeyEvent.VK_BACKSPACE;
+                    break;
+                case GLFW_KEY_LEFT:
+                    keyId = com.sun.glass.events.KeyEvent.VK_LEFT;
+                    break;
+                case GLFW_KEY_RIGHT:
+                    keyId = com.sun.glass.events.KeyEvent.VK_RIGHT;
+                    break;
+                case GLFW_KEY_UP:
+                    keyId = com.sun.glass.events.KeyEvent.VK_UP;
+                    break;
+                case GLFW_KEY_DOWN:
+                    keyId = com.sun.glass.events.KeyEvent.VK_DOWN;
+                    break;
+                case GLFW_KEY_TAB:
+                    keyId = com.sun.glass.events.KeyEvent.VK_TAB;
+                    break;
+                case GLFW_KEY_DELETE:
+                    keyId = com.sun.glass.events.KeyEvent.VK_DELETE;
+                    break;
+                case GLFW_KEY_HOME:
+                    keyId = com.sun.glass.events.KeyEvent.VK_HOME;
+                    break;
+                case GLFW_KEY_END:
+                    keyId = com.sun.glass.events.KeyEvent.VK_END;
+                    break;
+                case GLFW_KEY_PAGE_UP:
+                    keyId = com.sun.glass.events.KeyEvent.VK_PAGE_UP;
+                    break;
+                case GLFW_KEY_PAGE_DOWN:
+                    keyId = com.sun.glass.events.KeyEvent.VK_PAGE_DOWN;
+                    break;
+                case GLFW_KEY_INSERT:
+                    keyId = com.sun.glass.events.KeyEvent.VK_INSERT;
+                    break;
+            }
+
             switch (action) {
                 case KEY_PRESSED:
                 case KEY_REPEAT:
-                    if (scanCode == 22) {
+                    if (keyId > -1) {
                         GLFXStage.this.emScene.keyEvent(
                                 AbstractEvents.KEYEVENT_PRESSED,
-                                com.sun.glass.events.KeyEvent.VK_BACKSPACE,
+                                keyId,
                                 new char[]{}, 0);
                     }
 
@@ -391,10 +445,10 @@ public class GLFXStage extends GLObject {
                     }
                     break;
                 case KEY_RELEASE:
-                    if (scanCode == 22) {
+                    if (keyId > -1) {
                         GLFXStage.this.emScene.keyEvent(
                                 AbstractEvents.KEYEVENT_RELEASED,
-                                com.sun.glass.events.KeyEvent.VK_BACKSPACE,
+                                keyId,
                                 new char[]{}, 0);
                     }
 
