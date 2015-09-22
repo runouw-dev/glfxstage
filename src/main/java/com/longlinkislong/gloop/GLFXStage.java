@@ -44,7 +44,7 @@ public class GLFXStage extends GLObject {
     private volatile EmbeddedWindow stage;
     private EmbeddedSceneInterface emScene;
     private EmbeddedStageInterface emStage;
-    private volatile boolean isDirty = true;
+    //private volatile boolean isDirty = true;
     private float scaleFactor = 1f;
     private GLTexture texture;
     private ByteBuffer tBuffer;
@@ -153,7 +153,8 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void repaint() {
-            GLFXStage.this.isDirty = true;
+            //GLFXStage.this.isDirty = true;
+            GLFXStage.this.updateTexture();
         }
 
         @Override
@@ -330,12 +331,14 @@ public class GLFXStage extends GLObject {
     }
 
     private void updateTexture() {
-        if (this.emScene != null && this.isDirty) {
-            this.isDirty = false;
+        if (this.emScene != null) {            
             this.tBuffer.rewind();
-            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
+            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);            
             //this.filterTransparencies();
             this.texture.updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer);
+            this.texture.setAttributes(new GLTextureParameters()
+                        .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
+                        .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
         }
     }
 
@@ -355,8 +358,7 @@ public class GLFXStage extends GLObject {
      * @since 15.09.21
      */
     public GLTask newDrawTask() {
-        final GLTask bindTex = GLTask.create(() -> {
-            this.updateTexture();
+        final GLTask bindTex = GLTask.create(() -> {            
             this.texture.bind(0);
         });
 
