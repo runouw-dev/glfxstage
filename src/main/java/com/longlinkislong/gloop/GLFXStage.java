@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.paint.Color;
 
 /**
  * GLFXStage is an OpenGL object that can contain and render JavaFX scene
@@ -184,20 +183,6 @@ public class GLFXStage extends GLObject {
     };
 
     /**
-     * Sets the color used for transparency masking.
-     *
-     * @param color the color to set as transparency
-     * @param threshold the difference in color allowed for transparency.
-     * @since 15.09.21
-     */
-    public void setTransparencyColor(final Color color, final float threshold) {
-        if (color != null) {
-            PROGRAM.get().setUniformF("tMask", GLVec4D.create(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity()));
-            PROGRAM.get().setUniformF("tThreshold", threshold);
-        }
-    }
-
-    /**
      * Retrieves the width of the stage.
      *
      * @return the stage width.
@@ -334,7 +319,7 @@ public class GLFXStage extends GLObject {
         if (this.emScene != null) {            
             this.tBuffer.rewind();
             this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);            
-            //this.filterTransparencies();
+            
             this.texture.updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer);
             this.texture.setAttributes(new GLTextureParameters()
                         .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
