@@ -16,11 +16,25 @@ if(!project.hasProperty('artifactoryUser') || !project.hasProperty('artifactoryP
         }    
     }
 }
+
+task packageJavadoc(type: Jar, dependsOn: 'javadoc') {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+
+task packageSources(type: Jar, dependsOn: 'classes') {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
  
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
+            
+            artifact(packageSources)
+            artifact(packageJavadoc)
+            
             groupId = "${group}"
                         
             def versionPropsFile = new File("${projectDir}/version.properties")
@@ -71,6 +85,7 @@ task incrementMajor << {
         versionProps['minor'] = '0'
         versionProps['revision'] = '0'
     } else {
+        versionProps.load(new FileInputStream(versionPropsFile))
         versionProps['major'] = (versionProps['major'].toInteger() + 1).toString()
         versionProps['minor'] = '0'
         versionProps['revision'] = '0'
@@ -88,6 +103,7 @@ task incrementMinor << {
         versionProps['minor'] = '0'
         versionProps['revision'] = '0'
     } else {
+        versionProps.load(new FileInputStream(versionPropsFile))
         versionProps['minor'] = (versionProps['minor'].toInteger() + 1).toString()
         versionProps['revision'] = '0'
     }

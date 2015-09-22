@@ -358,7 +358,7 @@ public class GLFXStage extends GLObject {
                     this.texture.delete();
                 }
                 
-                this.texture = new GLTexture()
+                this.texture = new GLTexture(this.getThread())
                         .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height)
                         .setAttributes(new GLTextureParameters()
                                 .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)

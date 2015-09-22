@@ -38,7 +38,7 @@ public class GLAWTFontMetrics implements GLFontMetrics {
     /**
      * Constructs a new GLAWTFontMetrics from the AWTFontMetrics object.
      * @param font the font to use
-     * @param supportedGlyphs
+     * @param supportedGlyphs the set of supported glyphs.
      * @since 15.06.11
      */
     public GLAWTFontMetrics(final Font font, final GLFontGlpyhSet supportedGlyphs) {

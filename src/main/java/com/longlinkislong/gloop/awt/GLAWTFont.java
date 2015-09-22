@@ -84,7 +84,7 @@ public class GLAWTFont extends GLFont {
      * font object
      *
      * @param font the font
-     * @param supportedGlyphs
+     * @param supportedGlyphs the set of supported glyphs
      * @since 15.06.11
      */
     public GLAWTFont(final Font font, final GLFontGlpyhSet supportedGlyphs) {
@@ -97,7 +97,7 @@ public class GLAWTFont extends GLFont {
      *
      * @param thread the OpenGL thread
      * @param font the AWT font.
-     * @param supportedGlyphs
+     * @param supportedGlyphs the set of supported glyphs
      * @since 15.06.11
      */
     public GLAWTFont(final GLThread thread, final Font font, final GLFontGlpyhSet supportedGlyphs) {
@@ -226,11 +226,11 @@ public class GLAWTFont extends GLFont {
      * Retrieves the metrics object associated with the given AWT Font object.
      *
      * @param font the AWT font object.
-     * @param glyps
+     * @param glyps the set of supported glyphs
      * @return the associated metrics object.
      * @since 15.06.11
      */
-    public static GLFontMetrics getFontMetrics(final Font font, GLFontGlpyhSet glyps) {
+    public static GLFontMetrics getFontMetrics(final Font font, final GLFontGlpyhSet glyps) {
         if (METRICS_MAP.containsKey(font)) {
             return METRICS_MAP.get(font);
         } else {
