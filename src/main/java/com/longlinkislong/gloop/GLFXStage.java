@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
@@ -52,15 +51,14 @@ public class GLFXStage extends GLObject {
 
     private int width;
     private int height;
-
-    private Set<GLTexture> garbage = new HashSet<>();
+    
     private volatile EmbeddedWindow stage;
     private EmbeddedSceneInterface emScene;
     private EmbeddedStageInterface emStage;
     //private volatile boolean isDirty = true;
     private float scaleFactor = 1f;
     private GLTexture texture;
-    private ByteBuffer tBuffer;
+    private volatile ByteBuffer tBuffer;
     private final Lazy<GLBuffer> vPos = new Lazy<>(() -> {
         final GLBuffer verts = new GLBuffer();
 
@@ -315,35 +313,26 @@ public class GLFXStage extends GLObject {
         if (this.emStage != null) {
             this.emStage.setSize(width, height);
         }
-
-        if (this.texture != null) {
-            this.garbage.add(this.texture);
-        }
-
-        this.tBuffer = ByteBuffer.allocateDirect(newWidth * newHeight * Integer.BYTES).order(ByteOrder.nativeOrder());
-        this.texture = new GLTexture()
-                .allocate(1, GLTextureInternalFormat.GL_RGBA8, newWidth, newHeight)
-                .setAttributes(new GLTextureParameters()
-                        .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
-                        .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
+        
+        this.needsRecreate = true;
     }
 
+    // netbeans thinks these are unused. They are definitely being used.
+    private volatile boolean needsRecreate = false;
+    private volatile boolean needsUpdate = false;
+
     private void updateTexture() {
-        if (this.garbage.contains(this.texture)) {
-            return;
-        }
-
-        this.garbage.forEach(GLTexture::delete);
-        this.garbage.clear();
-
         if (this.emScene != null) {
+            final int neededSize = this.width * this.height * Integer.BYTES;
+            
+            if(this.tBuffer == null || neededSize > this.tBuffer.capacity()) {
+                this.tBuffer = ByteBuffer.allocateDirect(neededSize).order(ByteOrder.nativeOrder());
+            }
+            
             this.tBuffer.rewind();
             this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
 
-            this.texture.updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer);
-            this.texture.setAttributes(new GLTextureParameters()
-                    .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
-                    .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
+            this.needsUpdate = true;
         }
     }
 
@@ -364,6 +353,24 @@ public class GLFXStage extends GLObject {
      */
     public GLTask newDrawTask() {
         final GLTask bindTex = GLTask.create(() -> {
+            if (this.needsRecreate) {
+                if (this.texture != null) {
+                    this.texture.delete();
+                }
+                
+                this.texture = new GLTexture()
+                        .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height)
+                        .setAttributes(new GLTextureParameters()
+                                .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
+                                .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
+                this.needsRecreate = false;
+            }
+
+            if (this.needsUpdate) {
+                this.texture.updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer);
+                this.needsUpdate = false;
+            }
+
             this.texture.bind(0);
         });
 
@@ -598,7 +605,7 @@ public class GLFXStage extends GLObject {
     }
 
     public class StageResizeListener implements GLFramebufferResizeListener {
-        
+
         @Override
         public void framebufferResizedActionPerformed(GLWindow glw, GLViewport view) {
             GLFXStage.this.resize(view.width, view.height);
