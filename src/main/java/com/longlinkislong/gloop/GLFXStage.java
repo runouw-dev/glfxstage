@@ -18,11 +18,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.scene.Scene;
-import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
@@ -53,6 +53,7 @@ public class GLFXStage extends GLObject {
     private int width;
     private int height;
 
+    private Set<GLTexture> garbage = new HashSet<>();
     private volatile EmbeddedWindow stage;
     private EmbeddedSceneInterface emScene;
     private EmbeddedStageInterface emStage;
@@ -165,7 +166,6 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void repaint() {
-            //GLFXStage.this.isDirty = true;
             GLFXStage.this.updateTexture();
         }
 
@@ -317,7 +317,7 @@ public class GLFXStage extends GLObject {
         }
 
         if (this.texture != null) {
-            this.texture.delete();
+            this.garbage.add(this.texture);
         }
 
         this.tBuffer = ByteBuffer.allocateDirect(newWidth * newHeight * Integer.BYTES).order(ByteOrder.nativeOrder());
@@ -329,6 +329,13 @@ public class GLFXStage extends GLObject {
     }
 
     private void updateTexture() {
+        if (this.garbage.contains(this.texture)) {
+            return;
+        }
+
+        this.garbage.forEach(GLTexture::delete);
+        this.garbage.clear();
+
         if (this.emScene != null) {
             this.tBuffer.rewind();
             this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
@@ -587,6 +594,14 @@ public class GLFXStage extends GLObject {
                         GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
                         0, false);
             }
+        }
+    }
+
+    public class StageResizeListener implements GLFramebufferResizeListener {
+        
+        @Override
+        public void framebufferResizedActionPerformed(GLWindow glw, GLViewport view) {
+            GLFXStage.this.resize(view.width, view.height);
         }
     }
 }
