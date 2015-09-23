@@ -164,7 +164,7 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void repaint() {
-            GLFXStage.this.updateTexture();
+            GLFXStage.this.needsUpdate = true;
         }
 
         @Override
@@ -330,9 +330,7 @@ public class GLFXStage extends GLObject {
             }
             
             this.tBuffer.rewind();
-            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
-
-            this.needsUpdate = true;
+            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);            
         }
     }
 
@@ -359,15 +357,19 @@ public class GLFXStage extends GLObject {
                 }
                 
                 this.texture = new GLTexture(this.getThread())
-                        .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height)
-                        .setAttributes(new GLTextureParameters()
-                                .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
-                                .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
+                        .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height);
+                        
                 this.needsRecreate = false;
             }
 
             if (this.needsUpdate) {
-                this.texture.updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer);
+                this.updateTexture();
+                
+                this.texture
+                        .updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer)
+                        .setAttributes(new GLTextureParameters()
+                                .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
+                                .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
                 this.needsUpdate = false;
             }
 
