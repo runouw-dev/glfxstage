@@ -19,8 +19,8 @@ sourceCompatibility = '1.8'
 
 repositories {
     mavenCentral()
-    maven { url 'http://longlinkislong.com:8080/artifactory/libs-snapshot' }
-    maven { url 'http://longlinkislong.com:8080/artifactory/libs-release' }
+    maven { url 'http://jartifacts.longlinkislong.com/libs-snapshot' }
+    maven { url 'http://jartifacts.longlinkislong.com/libs-release' }
 }
 
 dependencies {    
