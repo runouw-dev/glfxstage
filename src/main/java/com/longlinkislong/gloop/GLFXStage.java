@@ -51,7 +51,7 @@ public class GLFXStage extends GLObject {
 
     private int width;
     private int height;
-    
+    private final GLMat projection = GLMat4F.ortho(-1f, 1f, -1f, 1f, 0f, 1f).asStaticMat();
     private volatile EmbeddedWindow stage;
     private EmbeddedSceneInterface emScene;
     private EmbeddedStageInterface emStage;
@@ -104,6 +104,8 @@ public class GLFXStage extends GLObject {
             program.setVertexAttributes(ATTRIBUTES);
             program.linkShaders(shVsh, shFsh);
 
+            program.setUniformMatrixF("vProj", GLMat4F.ortho(-1f, 1f, -1f, 1f, 0f, 1f));
+            
             shVsh.delete();
             shFsh.delete();
 
@@ -379,6 +381,7 @@ public class GLFXStage extends GLObject {
         return GLTask.join(
                 PROGRAM.get().new UseTask(),
                 PROGRAM.get().new SetUniformITask("fxTexture", 0),
+                PROGRAM.get().new SetUniformMatrixFTask("vProj", this.projection),
                 bindTex,
                 vao.get().new DrawArraysTask(GLDrawMode.GL_TRIANGLE_STRIP, 0, 4));
     }

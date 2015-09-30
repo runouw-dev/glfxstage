@@ -9,5 +9,6 @@ uniform float tThreshold;
 out vec4 fColor;
 
 void main() {
-    fColor = texture(fxTexture, uvs);
+    fColor = texture(fxTexture, uvs);    
+    //fColor = vec4(mix(vec3(1.0, 0.0, 0.0), fColor.rgb, fColor.a), 1.0); // DEBUG
 }
