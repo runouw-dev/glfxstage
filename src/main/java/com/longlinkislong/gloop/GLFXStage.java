@@ -8,6 +8,7 @@ package com.longlinkislong.gloop;
 import com.longlinkislong.gloop.GLVertexArray.DrawArraysTask;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.cursor.CursorFrame;
+import com.sun.javafx.cursor.CursorType;
 import com.sun.javafx.embed.AbstractEvents;
 import com.sun.javafx.embed.EmbeddedSceneInterface;
 import com.sun.javafx.embed.EmbeddedStageInterface;
@@ -22,6 +23,12 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import static org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR;
+import static org.lwjgl.glfw.GLFW.GLFW_CROSSHAIR_CURSOR;
+import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_HIDDEN;
+import static org.lwjgl.glfw.GLFW.GLFW_HAND_CURSOR;
+import static org.lwjgl.glfw.GLFW.GLFW_HRESIZE_CURSOR;
+import static org.lwjgl.glfw.GLFW.GLFW_IBEAM_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
@@ -34,6 +41,9 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
+import static org.lwjgl.glfw.GLFW.GLFW_VRESIZE_CURSOR;
+import static org.lwjgl.glfw.GLFW.glfwCreateStandardCursor;
+import static org.lwjgl.glfw.GLFW.glfwSetCursor;
 
 /**
  * GLFXStage is an OpenGL object that can contain and render JavaFX scene
@@ -179,7 +189,50 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void setCursor(CursorFrame cursorFrame) {
-
+            CursorType cursorType = cursorFrame.getCursorType();
+            
+            int glfwCursor = GLFW_ARROW_CURSOR;
+            
+            switch(cursorType){
+                case MOVE:
+                case OPEN_HAND:
+                    glfwCursor = GLFW_HAND_CURSOR;
+                    break;
+                case CLOSED_HAND:
+                    glfwCursor = GLFW_HAND_CURSOR;
+                    break;
+                case CROSSHAIR:
+                    glfwCursor = GLFW_CROSSHAIR_CURSOR;
+                    break;
+                case DISAPPEAR:
+                    glfwCursor = GLFW_CURSOR_HIDDEN;
+                    break;
+                case E_RESIZE:
+                case W_RESIZE:
+                    glfwCursor = GLFW_HRESIZE_CURSOR;
+                    break;
+                case N_RESIZE:
+                case S_RESIZE:
+                    glfwCursor = GLFW_VRESIZE_CURSOR;
+                    break;
+                case NE_RESIZE:
+                case SE_RESIZE:
+                case NW_RESIZE:
+                case SW_RESIZE:
+                    // TODO: glfw doesn't support these
+                    glfwCursor = GLFW_HRESIZE_CURSOR;
+                    break;
+                case TEXT:
+                    glfwCursor = GLFW_IBEAM_CURSOR;
+                    break;
+                case WAIT:
+                    // TODO: glfw doesn't sipport this
+                    break;
+                default:
+                    break;
+            }
+            
+            updateCursor(glfwCursor);
         }
 
         @Override
@@ -316,6 +369,16 @@ public class GLFXStage extends GLObject {
         
         this.needsRecreate = true;
     }
+    
+    public final void scroll(final double deltaX, final double deltaY) {
+        // TODO: this doesn't support horizontal scrolling! 
+        // there must be a better way
+        GLFXStage.this.emScene.mouseEvent(
+                        AbstractEvents.MOUSEEVENT_WHEEL, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
+                        leftButton, middleButton, rightButton,
+                        mouseX, mouseY, mouseX, mouseY,
+                        shift, ctrl, alt, meta, -(int)deltaY, false);
+    }
 
     // netbeans thinks these are unused. They are definitely being used.
     private volatile boolean needsRecreate = false;
@@ -343,6 +406,19 @@ public class GLFXStage extends GLObject {
      */
     public void draw() {
         newDrawTask().glRun(this.getThread());
+    }
+    
+    private void updateCursor(int cursor){
+        getThread().submitGLTask(GLTask.create(() -> {
+            System.out.println("Set cursor to " + cursor);
+            
+            // TODO: this could be the wrong window if there is more than one window
+            GLWindow window = GLWindow.listActiveWindows().get(0);
+            
+            if(window != null){
+                glfwSetCursor(window.window, glfwCreateStandardCursor(cursor));
+            }
+        }));
     }
 
     /**
@@ -610,5 +686,21 @@ public class GLFXStage extends GLObject {
         public void framebufferResizedActionPerformed(GLWindow glw, GLViewport view) {
             GLFXStage.this.resize(view.width, view.height);
         }
+    }
+    public class StageScrollListener implements GLMouseScrollListener {
+        @Override
+        public void mouseScrollActionPerformed(GLWindow glw, double x, double y) {
+            GLFXStage.this.scroll(x, y);
+        }
+    }
+    
+    // TODO: should have a function to remove these same events
+    public void addEvents(GLWindow window){
+        window.getKeyboard().addCharListener(new KeyCharListener());
+        window.getKeyboard().addKeyListener(new KeyListener());
+        window.getMouse().addButtonListener(new MouseButtonListener());
+        window.getMouse().addPositionListener(new MousePositionListener());
+        window.getMouse().addScrollListener(new StageScrollListener());
+        window.addWindowResizeListener(new StageResizeListener()); 
     }
 }
