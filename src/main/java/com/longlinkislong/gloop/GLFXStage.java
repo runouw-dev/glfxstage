@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
@@ -105,7 +106,7 @@ public class GLFXStage extends GLObject {
             program.linkShaders(shVsh, shFsh);
 
             program.setUniformMatrixF("vProj", GLMat4F.ortho(-1f, 1f, -1f, 1f, 0f, 1f));
-            
+
             shVsh.delete();
             shFsh.delete();
 
@@ -315,7 +316,7 @@ public class GLFXStage extends GLObject {
         if (this.emStage != null) {
             this.emStage.setSize(width, height);
         }
-        
+
         this.needsRecreate = true;
     }
 
@@ -326,13 +327,13 @@ public class GLFXStage extends GLObject {
     private void updateTexture() {
         if (this.emScene != null) {
             final int neededSize = this.width * this.height * Integer.BYTES;
-            
-            if(this.tBuffer == null || neededSize > this.tBuffer.capacity()) {
+
+            if (this.tBuffer == null || neededSize > this.tBuffer.capacity()) {
                 this.tBuffer = ByteBuffer.allocateDirect(neededSize).order(ByteOrder.nativeOrder());
             }
-            
+
             this.tBuffer.rewind();
-            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);            
+            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
         }
     }
 
@@ -357,16 +358,16 @@ public class GLFXStage extends GLObject {
                 if (this.texture != null) {
                     this.texture.delete();
                 }
-                
+
                 this.texture = new GLTexture(this.getThread())
                         .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height);
-                        
+
                 this.needsRecreate = false;
             }
 
             if (this.needsUpdate) {
                 this.updateTexture();
-                
+
                 this.texture
                         .updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer)
                         .setAttributes(new GLTextureParameters()
@@ -396,7 +397,24 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void keyActionPerformed(GLWindow glw, int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers) {
-            int keyId = -1;            
+            int keyId = -1;
+            int mods = 0;
+            
+            if(modifiers.contains(GLKeyModifier.ALT)) {
+                mods |= AbstractEvents.MODIFIER_ALT;
+            }
+            
+            if(modifiers.contains(GLKeyModifier.CONTROL)) {
+                mods |= AbstractEvents.MODIFIER_CONTROL;
+            }
+            
+            if(modifiers.contains(GLKeyModifier.SHIFT)) {
+                mods |= AbstractEvents.MODIFIER_SHIFT;
+            }
+            
+            if(modifiers.contains(GLKeyModifier.SUPER)) {
+                mods |= AbstractEvents.MODIFIER_META;
+            }
 
             switch (key) {
                 case GLFW_KEY_BACKSPACE:
@@ -434,7 +452,11 @@ public class GLFXStage extends GLObject {
                     break;
                 case GLFW_KEY_INSERT:
                     keyId = com.sun.glass.events.KeyEvent.VK_INSERT;
-                    break;                
+                    break;
+                default:
+                    if((key >= GLFW.GLFW_KEY_A && key <= GLFW.GLFW_KEY_Z) || (key >= GLFW.GLFW_KEY_0 && key <= GLFW.GLFW_KEY_9)) {
+                        keyId = key; // they're all the same -\_0_0_/-                        
+                    }                
             }
 
             switch (action) {
@@ -444,7 +466,7 @@ public class GLFXStage extends GLObject {
                         GLFXStage.this.emScene.keyEvent(
                                 AbstractEvents.KEYEVENT_PRESSED,
                                 keyId,
-                                new char[]{}, 0);
+                                new char[]{}, mods);
                     }
 
                     if (modifiers.contains(GLKeyModifier.SHIFT)) {
@@ -468,7 +490,7 @@ public class GLFXStage extends GLObject {
                         GLFXStage.this.emScene.keyEvent(
                                 AbstractEvents.KEYEVENT_RELEASED,
                                 keyId,
-                                new char[]{}, 0);
+                                new char[]{}, mods);
                     }
 
                     if (modifiers.contains(GLKeyModifier.SHIFT)) {
@@ -500,8 +522,9 @@ public class GLFXStage extends GLObject {
     public class KeyCharListener implements GLKeyCharListener {
 
         @Override
-        public void charTypePerformed(GLWindow glw, char c) {                        
-            GLFXStage.this.emScene.keyEvent(AbstractEvents.KEYEVENT_TYPED, com.sun.glass.events.KeyEvent.VK_UNDEFINED, new char[]{c}, 0);
+        public void charTypePerformed(GLWindow glw, char c) {
+            int mods = GLFXStage.this.ctrl ? AbstractEvents.MODIFIER_CONTROL : 0;
+            GLFXStage.this.emScene.keyEvent(AbstractEvents.KEYEVENT_TYPED, com.sun.glass.events.KeyEvent.VK_UNDEFINED, new char[]{c}, mods);
         }
     }
 
@@ -587,32 +610,32 @@ public class GLFXStage extends GLObject {
             if (GLFXStage.this.emScene == null) {
                 return;
             }
-            
-            GLFXStage.this.mouseX = (int) x;
-            GLFXStage.this.mouseY = (int) y;            
 
-            if (GLFXStage.this.leftButton) {                
+            GLFXStage.this.mouseX = (int) x;
+            GLFXStage.this.mouseY = (int) y;
+
+            if (GLFXStage.this.leftButton) {
                 GLFXStage.this.emScene.mouseEvent(
                         AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,
                         GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
                         GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseX, GLFXStage.this.mouseY,
                         GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
                         0, false);
-            } else if(GLFXStage.this.rightButton) {
+            } else if (GLFXStage.this.rightButton) {
                 GLFXStage.this.emScene.mouseEvent(
                         AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON,
                         GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
                         GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseX, GLFXStage.this.mouseY,
                         GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
                         0, false);
-            } else if(GLFXStage.this.middleButton) {
+            } else if (GLFXStage.this.middleButton) {
                 GLFXStage.this.emScene.mouseEvent(
                         AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON,
                         GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
                         GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseX, GLFXStage.this.mouseY,
                         GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
-                        0, false);                
-            }else {
+                        0, false);
+            } else {
                 GLFXStage.this.emScene.mouseEvent(
                         AbstractEvents.MOUSEEVENT_MOVED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
                         GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
