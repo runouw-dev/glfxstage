@@ -17,19 +17,18 @@ import com.sun.javafx.stage.EmbeddedWindow;
 import com.sun.javafx.tk.Toolkit;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import org.lwjgl.glfw.GLFW;
-import static org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR;
-import static org.lwjgl.glfw.GLFW.GLFW_CROSSHAIR_CURSOR;
-import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_HIDDEN;
-import static org.lwjgl.glfw.GLFW.GLFW_HAND_CURSOR;
-import static org.lwjgl.glfw.GLFW.GLFW_HRESIZE_CURSOR;
-import static org.lwjgl.glfw.GLFW.GLFW_IBEAM_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
@@ -42,9 +41,6 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
-import static org.lwjgl.glfw.GLFW.GLFW_VRESIZE_CURSOR;
-import static org.lwjgl.glfw.GLFW.glfwCreateStandardCursor;
-import static org.lwjgl.glfw.GLFW.glfwSetCursor;
 
 /**
  * GLFXStage is an OpenGL object that can contain and render JavaFX scene
@@ -192,50 +188,58 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void setCursor(CursorFrame cursorFrame) {
-            CursorType cursorType = cursorFrame.getCursorType();
-            
-            int glfwCursor = GLFW_ARROW_CURSOR;
-            
-            switch(cursorType){
-                case MOVE:
-                case OPEN_HAND:
-                    glfwCursor = GLFW_HAND_CURSOR;
+            final CursorType cursorType = cursorFrame.getCursorType();
+
+            System.out.println(cursorFrame.getClass());
+            switch (cursorType) {
+                case DEFAULT:
+                    updateCursor(GLFXCursor.DEFAULT);
                     break;
-                case CLOSED_HAND:
-                    glfwCursor = GLFW_HAND_CURSOR;
+                case MOVE:
+                    updateCursor(GLFXCursor.MOVE);
+                    break;
+                case OPEN_HAND:
+                    updateCursor(GLFXCursor.OPEN_HAND);
                     break;
                 case CROSSHAIR:
-                    glfwCursor = GLFW_CROSSHAIR_CURSOR;
+                    updateCursor(GLFXCursor.CROSSHAIR);
                     break;
                 case DISAPPEAR:
-                    glfwCursor = GLFW_CURSOR_HIDDEN;
+                    updateCursor(GLFXCursor.DISAPPEAR);
                     break;
                 case E_RESIZE:
+                    updateCursor(GLFXCursor.E_RESIZE);
+                    break;
                 case W_RESIZE:
-                    glfwCursor = GLFW_HRESIZE_CURSOR;
+                    updateCursor(GLFXCursor.W_RESIZE);
                     break;
                 case N_RESIZE:
+                    updateCursor(GLFXCursor.N_RESIZE);
+                    break;
                 case S_RESIZE:
-                    glfwCursor = GLFW_VRESIZE_CURSOR;
+                    updateCursor(GLFXCursor.S_RESIZE);
                     break;
                 case NE_RESIZE:
+                    updateCursor(GLFXCursor.NE_RESIZE);
+                    break;
                 case SE_RESIZE:
+                    updateCursor(GLFXCursor.SE_RESIZE);
+                    break;
                 case NW_RESIZE:
+                    updateCursor(GLFXCursor.NW_RESIZE);
+                    break;
                 case SW_RESIZE:
-                    // TODO: glfw doesn't support these
-                    glfwCursor = GLFW_HRESIZE_CURSOR;
+                    updateCursor(GLFXCursor.SW_RESIZE);
                     break;
                 case TEXT:
-                    glfwCursor = GLFW_IBEAM_CURSOR;
+                    updateCursor(GLFXCursor.TEXT);
                     break;
                 case WAIT:
-                    // TODO: glfw doesn't sipport this
+                    updateCursor(GLFXCursor.WAIT);
                     break;
                 default:
                     break;
             }
-            
-            updateCursor(glfwCursor);
         }
 
         @Override
@@ -372,15 +376,15 @@ public class GLFXStage extends GLObject {
 
         this.needsRecreate = true;
     }
-    
+
     public final void scroll(final double deltaX, final double deltaY) {
         // TODO: this doesn't support horizontal scrolling! 
         // there must be a better way
         GLFXStage.this.emScene.mouseEvent(
-                        AbstractEvents.MOUSEEVENT_WHEEL, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
-                        leftButton, middleButton, rightButton,
-                        mouseX, mouseY, mouseX, mouseY,
-                        shift, ctrl, alt, meta, -(int)deltaY, false);
+                AbstractEvents.MOUSEEVENT_WHEEL, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
+                leftButton, middleButton, rightButton,
+                mouseX, mouseY, mouseX, mouseY,
+                shift, ctrl, alt, meta, -(int) deltaY, false);
     }
 
     // netbeans thinks these are unused. They are definitely being used.
@@ -408,18 +412,17 @@ public class GLFXStage extends GLObject {
     public void draw() {
         newDrawTask().glRun(this.getThread());
     }
-    
-    private void updateCursor(int cursor){
-        GLTask.create(()->{
-            System.out.println("Set cursor to " + cursor);
-            
-            // TODO: this could be the wrong window if there is more than one window
-            GLWindow window = GLWindow.listActiveWindows().get(0);
-            
-            if(window != null){                
-                glfwSetCursor(window.window, glfwCreateStandardCursor(cursor));
-            }
-        }).glRun(this.getThread());        
+
+    private void updateCursor(GLFXCursor cursor) {
+
+        System.out.println("Set cursor to " + cursor);
+
+        if (this.window == null || this.window.get() == null) {
+            cursor.apply(GLWindow.listActiveWindows().get(0));
+        } else {
+            cursor.apply(this.window.get());
+        }
+
     }
 
     /**
@@ -475,20 +478,20 @@ public class GLFXStage extends GLObject {
         public void keyActionPerformed(GLWindow glw, int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers) {
             int keyId = -1;
             int mods = 0;
-            
-            if(modifiers.contains(GLKeyModifier.ALT)) {
+
+            if (modifiers.contains(GLKeyModifier.ALT)) {
                 mods |= AbstractEvents.MODIFIER_ALT;
             }
-            
-            if(modifiers.contains(GLKeyModifier.CONTROL)) {
+
+            if (modifiers.contains(GLKeyModifier.CONTROL)) {
                 mods |= AbstractEvents.MODIFIER_CONTROL;
             }
-            
-            if(modifiers.contains(GLKeyModifier.SHIFT)) {
+
+            if (modifiers.contains(GLKeyModifier.SHIFT)) {
                 mods |= AbstractEvents.MODIFIER_SHIFT;
             }
-            
-            if(modifiers.contains(GLKeyModifier.SUPER)) {
+
+            if (modifiers.contains(GLKeyModifier.SUPER)) {
                 mods |= AbstractEvents.MODIFIER_META;
             }
 
@@ -530,9 +533,9 @@ public class GLFXStage extends GLObject {
                     keyId = com.sun.glass.events.KeyEvent.VK_INSERT;
                     break;
                 default:
-                    if((key >= GLFW.GLFW_KEY_A && key <= GLFW.GLFW_KEY_Z) || (key >= GLFW.GLFW_KEY_0 && key <= GLFW.GLFW_KEY_9)) {
+                    if ((key >= GLFW.GLFW_KEY_A && key <= GLFW.GLFW_KEY_Z) || (key >= GLFW.GLFW_KEY_0 && key <= GLFW.GLFW_KEY_9)) {
                         keyId = key; // they're all the same -\_0_0_/-                        
-                    }                
+                    }
             }
 
             switch (action) {
@@ -729,20 +732,63 @@ public class GLFXStage extends GLObject {
             GLFXStage.this.resize(view.width, view.height);
         }
     }
+
     public class StageScrollListener implements GLMouseScrollListener {
+
         @Override
         public void mouseScrollActionPerformed(GLWindow glw, double x, double y) {
             GLFXStage.this.scroll(x, y);
         }
     }
-    
-    // TODO: should have a function to remove these same events
-    public void addEvents(GLWindow window){
-        window.getKeyboard().addCharListener(new KeyCharListener());
-        window.getKeyboard().addKeyListener(new KeyListener());
-        window.getMouse().addButtonListener(new MouseButtonListener());
-        window.getMouse().addPositionListener(new MousePositionListener());
-        window.getMouse().addScrollListener(new StageScrollListener());
-        window.addWindowResizeListener(new StageResizeListener()); 
+    private Reference<GLWindow> window = null;
+    private final Set<Object> activeListeners = new HashSet<>();
+
+    public void addEvents(GLWindow window) {
+        Objects.requireNonNull(window);
+        this.window = new WeakReference<>(window);
+
+        final GLKeyCharListener kcListener = new KeyCharListener();
+        final GLKeyListener kListener = new KeyListener();
+        final GLMouseButtonListener mbListener = new MouseButtonListener();
+        final GLMousePositionListener mpListener = new MousePositionListener();
+        final GLMouseScrollListener msListener = new StageScrollListener();
+        final GLFramebufferResizeListener fbListener = new StageResizeListener();
+
+        activeListeners.addAll(Arrays.asList(kcListener, kListener, mbListener, mpListener, msListener, fbListener));
+
+        window.getKeyboard().addCharListener(kcListener);
+        window.getKeyboard().addKeyListener(kListener);
+        window.getMouse().addButtonListener(mbListener);
+        window.getMouse().addPositionListener(mpListener);
+        window.getMouse().addScrollListener(msListener);
+        window.addWindowResizeListener(fbListener);
     }
+
+    public void removeEvents(GLWindow window) {
+        if (this.window == null) {
+            return;
+        } else if (this.window.get() != window) {
+            throw new GLException("Supplied window is not the same reference as the current window!");
+        }
+
+        for (Object listener : activeListeners) {
+            if (listener instanceof KeyCharListener) {
+                window.getKeyboard().removeCharListener((KeyCharListener) listener);
+            } else if (listener instanceof KeyListener) {
+                window.getKeyboard().removeKeyListener((KeyListener) listener);
+            } else if (listener instanceof MouseButtonListener) {
+                window.getMouse().removeButtonListener((MouseButtonListener) listener);
+            } else if (listener instanceof MousePositionListener) {
+                window.getMouse().removePositionListener((MousePositionListener) listener);
+            } else if (listener instanceof StageScrollListener) {
+                window.getMouse().removeScrollListener((StageScrollListener) listener);
+            } else if (listener instanceof StageResizeListener) {
+                window.removeWindowResizeListener((StageResizeListener) listener);
+            }
+        }
+
+        activeListeners.clear();
+        this.window = null;
+    }
+
 }
