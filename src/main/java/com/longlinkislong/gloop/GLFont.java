@@ -48,10 +48,10 @@ public abstract class GLFont extends GLObject {
      * Constructs a new GLFont object on the default OpenGL thread.
      *
      * @param thread the thread to create the object on.
-     * @param supportedGlyphs
+     * @param supportedGlyphs the set of glyphs supported.
      * @since 15.07.01
      */
-    public GLFont(final GLThread thread, GLFontGlpyhSet supportedGlyphs) {
+    public GLFont(final GLThread thread, final GLFontGlpyhSet supportedGlyphs) {
         super(thread);
         
         this.texture = new GLTexture(thread);
