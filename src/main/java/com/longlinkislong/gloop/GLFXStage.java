@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CROSSHAIR_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_HIDDEN;
@@ -409,16 +410,16 @@ public class GLFXStage extends GLObject {
     }
     
     private void updateCursor(int cursor){
-        getThread().submitGLTask(GLTask.create(() -> {
+        GLTask.create(()->{
             System.out.println("Set cursor to " + cursor);
             
             // TODO: this could be the wrong window if there is more than one window
             GLWindow window = GLWindow.listActiveWindows().get(0);
             
-            if(window != null){
+            if(window != null){                
                 glfwSetCursor(window.window, glfwCreateStandardCursor(cursor));
             }
-        }));
+        }).glRun(this.getThread());        
     }
 
     /**
