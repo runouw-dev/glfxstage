@@ -396,7 +396,7 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void keyActionPerformed(GLWindow glw, int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers) {
-            int keyId = -1;
+            int keyId = -1;            
 
             switch (key) {
                 case GLFW_KEY_BACKSPACE:
@@ -434,7 +434,7 @@ public class GLFXStage extends GLObject {
                     break;
                 case GLFW_KEY_INSERT:
                     keyId = com.sun.glass.events.KeyEvent.VK_INSERT;
-                    break;
+                    break;                
             }
 
             switch (action) {
@@ -500,7 +500,7 @@ public class GLFXStage extends GLObject {
     public class KeyCharListener implements GLKeyCharListener {
 
         @Override
-        public void charTypePerformed(GLWindow glw, char c) {
+        public void charTypePerformed(GLWindow glw, char c) {                        
             GLFXStage.this.emScene.keyEvent(AbstractEvents.KEYEVENT_TYPED, com.sun.glass.events.KeyEvent.VK_UNDEFINED, new char[]{c}, 0);
         }
     }
@@ -587,18 +587,32 @@ public class GLFXStage extends GLObject {
             if (GLFXStage.this.emScene == null) {
                 return;
             }
-
+            
             GLFXStage.this.mouseX = (int) x;
-            GLFXStage.this.mouseY = (int) y;
+            GLFXStage.this.mouseY = (int) y;            
 
-            if (GLFXStage.this.leftButton || GLFXStage.this.rightButton || GLFXStage.this.middleButton) {
+            if (GLFXStage.this.leftButton) {                
                 GLFXStage.this.emScene.mouseEvent(
-                        AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
+                        AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,
                         GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
                         GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseX, GLFXStage.this.mouseY,
                         GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
                         0, false);
-            } else {
+            } else if(GLFXStage.this.rightButton) {
+                GLFXStage.this.emScene.mouseEvent(
+                        AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON,
+                        GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
+                        GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseX, GLFXStage.this.mouseY,
+                        GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
+                        0, false);
+            } else if(GLFXStage.this.middleButton) {
+                GLFXStage.this.emScene.mouseEvent(
+                        AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON,
+                        GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
+                        GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseX, GLFXStage.this.mouseY,
+                        GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
+                        0, false);                
+            }else {
                 GLFXStage.this.emScene.mouseEvent(
                         AbstractEvents.MOUSEEVENT_MOVED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
                         GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
