@@ -51,7 +51,11 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
  */
 public class GLFX3DStage extends GLObject {
 
+    private static final boolean DEBUG;
+
     static {
+        DEBUG = Boolean.getBoolean("debug") && !System.getProperty("debug.exclude", "").contains("glfx3dstage");
+
         PlatformImpl.startup(() -> {
         });
     }
@@ -61,44 +65,39 @@ public class GLFX3DStage extends GLObject {
     public void setMatrix(GLMat4F matrix) {
         this.matrix.set(matrix);
     }
-    
-    
-    protected class MousePos{
+
+    class MousePos {
+
         double x;
         double y;
 
-        public MousePos(double x, double y) {
+        MousePos(double x, double y) {
             this.x = x;
             this.y = y;
         }
     }
-    
-    protected MousePos transformMouse(double x, double y){
-        System.out.println("Before " + x + ", " + y);
-        
+
+    MousePos transformMouse(double x, double y) {
         x /= Math.max(windowWidth, 1);
         y /= Math.max(windowHeight, 1);
-        
-        GLVec4F vec = GLVec4F.create((float)x, (float)y, 0, 1);
-        GLVec4F after = matrix.inverse().multiply(vec);
-        
+
+        final GLVec4F vec = GLVec4F.create((float) x, (float) y, 0, 1);
+        final GLVec4F after = matrix.inverse().multiply(vec);
+
         x = after.x() * width;
         y = after.y() * height;
-        
-        System.out.println("After " + x + ", " + y);
-        
+
         return new MousePos(x, y);
     }
-    
+
     private int windowWidth;
     private int windowHeight;
     private int width;
     private int height;
-    private final GLMat projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
+    private final GLMat4F projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
     private volatile EmbeddedWindow stage;
     private EmbeddedSceneInterface emScene;
     private EmbeddedStageInterface emStage;
-    //private volatile boolean isDirty = true;
     private float scaleFactor = 1f;
     private GLTexture texture;
     private volatile ByteBuffer tBuffer;
@@ -319,7 +318,14 @@ public class GLFX3DStage extends GLObject {
     public GLFX3DStage(final GLThread thread, final int width, final int height) {
         super(thread);
 
+        if (width < 1) {
+            throw new IllegalArgumentException(String.format("Width [%d] must be at least 1!", width));
+        } else if (height < 1) {
+            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
+        }
+
         this.resize(width, height);
+
     }
 
     /**
@@ -331,6 +337,12 @@ public class GLFX3DStage extends GLObject {
      */
     public GLFX3DStage(final int width, final int height) {
         super();
+
+        if (width < 1) {
+            throw new IllegalArgumentException(String.format("Width [%d] must be at leats 1!", width));
+        } else if (height < 1) {
+            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
+        }
 
         this.resize(width, height);
     }
@@ -398,10 +410,14 @@ public class GLFX3DStage extends GLObject {
      * @since 15.09.21
      */
     public final void setParentWindowSize(final int newWidth, final int newHeight) {
-        this.windowWidth = newWidth;
-        this.windowHeight = newHeight;
+        if (newWidth > 0 && newHeight > 0) {
+            this.windowWidth = newWidth;
+            this.windowHeight = newHeight;
+        } else if (DEBUG) {
+            System.err.println("[GLFX3DStage] Parent window resize rejected; width or height is less than 1.");
+        }
     }
-    
+
     /**
      * Resizes the stage.
      *
@@ -410,18 +426,26 @@ public class GLFX3DStage extends GLObject {
      * @since 15.09.21
      */
     public final void resize(final int newWidth, final int newHeight) {
-        this.width = newWidth;
-        this.height = newHeight;
-
-        if (this.emScene != null) {
-            this.emScene.setSize(width, height);
+        if (DEBUG) {
+            System.out.printf("[GLFX3DStage] Requested resize: <%d, %d\n", newWidth, newHeight);
         }
 
-        if (this.emStage != null) {
-            this.emStage.setSize(width, height);
-        }
+        if (newWidth > 0 && newHeight > 0) {
+            this.width = newWidth;
+            this.height = newHeight;
 
-        this.needsRecreate = true;
+            if (this.emScene != null) {
+                this.emScene.setSize(width, height);
+            }
+
+            if (this.emStage != null) {
+                this.emStage.setSize(width, height);
+            }
+
+            this.needsRecreate = true;
+        } else if (DEBUG) {
+            System.err.println("[GLFX3DStage] Resize rejected; width or height is less than 1.");
+        }
     }
 
     public final void scroll(final double deltaX, final double deltaY) {
@@ -442,12 +466,16 @@ public class GLFX3DStage extends GLObject {
         if (this.emScene != null) {
             final int neededSize = this.width * this.height * Integer.BYTES;
 
-            if (this.tBuffer == null || neededSize > this.tBuffer.capacity()) {
-                this.tBuffer = ByteBuffer.allocateDirect(neededSize).order(ByteOrder.nativeOrder());
-            }
+            if (neededSize > 0) {
+                if (this.tBuffer == null || neededSize > this.tBuffer.capacity()) {
+                    this.tBuffer = ByteBuffer.allocateDirect(neededSize).order(ByteOrder.nativeOrder());
+                }
 
-            this.tBuffer.rewind();
-            this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
+                this.tBuffer.rewind();
+                this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
+            } else if (DEBUG) {
+                System.err.println("[GLFX3DStage] Request to read 0 bytes ignored!");
+            }
         }
     }
 
@@ -478,18 +506,22 @@ public class GLFX3DStage extends GLObject {
      */
     public GLTask newDrawTask() {
         final GLTask bindTask = GLTask.create(() -> {
-            
+
             PROGRAM.get().setUniformMatrixF("vProj", this.matrix.multiply(this.projection));
-            
+
             if (this.needsRecreate) {
-                if (this.texture != null) {
-                    this.texture.delete();
+                if (this.width > 0 && this.height > 0) {
+                    if (this.texture != null) {
+                        this.texture.delete();
+                    }
+
+                    this.texture = new GLTexture(this.getThread())
+                            .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height);
+
+                    this.needsRecreate = false;
+                } else if (DEBUG) {
+                    System.out.printf("[GLFX3DStage] Ignored invalid request to resize texture to <%d, %d>\n", this.width, this.height);
                 }
-
-                this.texture = new GLTexture(this.getThread())
-                        .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height);
-
-                this.needsRecreate = false;
             }
 
             if (this.needsUpdate) {
@@ -736,7 +768,7 @@ public class GLFX3DStage extends GLObject {
             if (GLFX3DStage.this.emScene == null) {
                 return;
             }
-            
+
             MousePos mouse = transformMouse(x, y);
 
             GLFX3DStage.this.mouseX = (int) mouse.x;
