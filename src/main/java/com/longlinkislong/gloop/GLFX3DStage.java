@@ -101,7 +101,7 @@ public class GLFX3DStage extends GLObject {
     private int windowHeight;
     private int width;
     private int height;
-    private final GLMat projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
+    private final GLMat4F projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
     private boolean focus = false;
 
     public void setFocus(boolean focus) {
