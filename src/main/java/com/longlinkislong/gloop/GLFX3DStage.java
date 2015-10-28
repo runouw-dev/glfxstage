@@ -73,7 +73,7 @@ public class GLFX3DStage extends GLObject {
         this.matrix.set(matrix);
     }
 
-    class MousePos {
+    private class MousePos {
 
         double x;
         double y;
@@ -84,15 +84,17 @@ public class GLFX3DStage extends GLObject {
         }
     }
     
-    protected MousePos transformMouse(double x, double y){
-        x /= Math.max(windowWidth, 1);
-        y /= Math.max(windowHeight, 1);
+    private MousePos transformMouse(double x, double y){
+        if(useTransformMouse){
+            x /= Math.max(windowWidth, 1);
+            y /= Math.max(windowHeight, 1);
 
-        final GLVec4F vec = GLVec4F.create((float) x, (float) y, 0, 1);
-        final GLVec4F after = matrix.inverse().multiply(vec);
+            final GLVec4F vec = GLVec4F.create((float) x, (float) y, 0, 1);
+            final GLVec4F after = matrix.inverse().multiply(vec);
 
-        x = after.x() * width;
-        y = after.y() * height;
+            x = after.x() * width;
+            y = after.y() * height;
+        }
         
         return new MousePos(x, y);
     }
@@ -102,7 +104,13 @@ public class GLFX3DStage extends GLObject {
     private int width;
     private int height;
     private final GLMat4F projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
-    private boolean focus = false;
+    private boolean focus = true;
+    private boolean useTransformMouse = true;
+
+    public void setUseTransformMouse(boolean useTransformMouse) {
+        this.useTransformMouse = useTransformMouse;
+    }
+    
 
     public void setFocus(boolean focus) {
         if(this.focus == focus){
