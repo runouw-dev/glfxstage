@@ -47,14 +47,19 @@ publishing {
                 versionProps['revision'] = '0'
         
                 if(versioning == 'auto') {
-                    versionProps.store(versionPropsFile.newWriter(), null)
+                    def writer = versionPropsFile.newWriter()
+                    
+                    versionProps.store(writer, null)
+                    writer.close()
                 }
                     
                 version = "1.0r0"
             } else if(versionPropsFile.canRead()) {
                 def versionProps = new Properties()
-        
-                versionProps.load(new FileInputStream(versionPropsFile))
+                def reader = versionPropsFile.newReader()
+                
+                versionProps.load(reader)
+                reader.close()
         
                 def major = versionProps['major']
                 def minor = versionProps['minor']
@@ -63,7 +68,10 @@ publishing {
                 versionProps['revision'] = revision.toString()
                     
                 if(versioning == 'auto') {
-                    versionProps.store(versionPropsFile.newWriter(), null)
+                    def writer = versionPropsFile.newWriter()
+                    
+                    versionProps.store(writer, null)
+                    writer.close()
                 }
         
                 version = "${major}.${minor}r${revision}"
@@ -85,7 +93,11 @@ task incrementMajor << {
         versionProps['minor'] = '0'
         versionProps['revision'] = '0'
     } else {
-        versionProps.load(new FileInputStream(versionPropsFile))
+        def reader = versionPropsFile.newReader()
+        
+        versionProps.load(reader)
+        reader.close()
+        
         versionProps['major'] = (versionProps['major'].toInteger() + 1).toString()
         versionProps['minor'] = '0'
         versionProps['revision'] = '0'
@@ -103,7 +115,11 @@ task incrementMinor << {
         versionProps['minor'] = '0'
         versionProps['revision'] = '0'
     } else {
-        versionProps.load(new FileInputStream(versionPropsFile))
+        def reader = versionPropsFile.newReader()
+        
+        versionProps.load(reader)
+        reader.close()
+        
         versionProps['minor'] = (versionProps['minor'].toInteger() + 1).toString()
         versionProps['revision'] = '0'
     }
@@ -124,7 +140,10 @@ task version << {
         
         println 'Version: 1.0r0'
     } else {
-        versionProps.load(new FileInputStream(versionPropsFile))
+        def reader = versionPropsFile.newReader()
+        
+        versionProps.load(reader)
+        reader.close()
         
         def major = versionProps['major']
         def minor = versionProps['minor']

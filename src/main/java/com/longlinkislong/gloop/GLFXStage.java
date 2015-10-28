@@ -295,11 +295,13 @@ public class GLFXStage extends GLObject {
     public GLFXStage(final GLThread thread, final int width, final int height) {
         super(thread);
 
-        if (width > 0 && height > 0) {
-            this.resize(width, height);
-        } else {
-            throw new IllegalArgumentException("Width and Height must be at least 1!");
+        if (width < 1) {
+            throw new IllegalArgumentException(String.format("Width [%d] must be at leats 1!", width));
+        } else if (height < 1) {
+            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
         }
+
+        this.resize(width, height);
     }
 
     /**
@@ -312,11 +314,13 @@ public class GLFXStage extends GLObject {
     public GLFXStage(final int width, final int height) {
         super();
 
-        if (width > 0 && height > 0) {
-            this.resize(width, height);
-        } else {
-            throw new IllegalArgumentException("Width and Height must be at least 1!");
+        if (width < 1) {
+            throw new IllegalArgumentException(String.format("Width [%d] must be at leats 1!", width));
+        } else if (height < 1) {
+            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
         }
+
+        this.resize(width, height);
     }
 
     private void setSceneImpl(final Scene scene) {
