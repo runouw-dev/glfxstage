@@ -46,11 +46,18 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
  * GLFX3DStage is an OpenGL object that can contain and render JavaFX scene
  * objects.
  *
- * @author zmichaels
- * @since 15.09.21
+ * @author zmichaels, rhewitt (modifications)
+ * @since 15.10.19
  */
 public class GLFX3DStage extends GLObject {
 
+    /**
+     * TODO:
+     * Show window with a dimmed color transform when unfocused (or expose
+     * color transforms)
+     * 
+     */
+    
     static {
         PlatformImpl.startup(() -> {
         });
@@ -74,8 +81,6 @@ public class GLFX3DStage extends GLObject {
     }
     
     protected MousePos transformMouse(double x, double y){
-        System.out.println("Before " + x + ", " + y);
-        
         x /= Math.max(windowWidth, 1);
         y /= Math.max(windowHeight, 1);
         
@@ -85,8 +90,6 @@ public class GLFX3DStage extends GLObject {
         x = after.x() * width;
         y = after.y() * height;
         
-        System.out.println("After " + x + ", " + y);
-        
         return new MousePos(x, y);
     }
     
@@ -95,6 +98,24 @@ public class GLFX3DStage extends GLObject {
     private int width;
     private int height;
     private final GLMat projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
+    private boolean focus = false;
+
+    public void setFocus(boolean focus) {
+        if(this.focus == focus){
+            // no change
+            return;
+        }
+        
+        this.focus = focus;
+        
+        System.out.println("Set focus " + focus);
+        
+        if(focus == false){
+            emStage.focusUngrab();
+        }
+    }
+    
+    
     private volatile EmbeddedWindow stage;
     private EmbeddedSceneInterface emScene;
     private EmbeddedStageInterface emStage;
@@ -523,119 +544,7 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void keyActionPerformed(GLWindow glw, int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers) {
-            int keyId = -1;
-            int mods = 0;
-
-            if (modifiers.contains(GLKeyModifier.ALT)) {
-                mods |= AbstractEvents.MODIFIER_ALT;
-            }
-
-            if (modifiers.contains(GLKeyModifier.CONTROL)) {
-                mods |= AbstractEvents.MODIFIER_CONTROL;
-            }
-
-            if (modifiers.contains(GLKeyModifier.SHIFT)) {
-                mods |= AbstractEvents.MODIFIER_SHIFT;
-            }
-
-            if (modifiers.contains(GLKeyModifier.SUPER)) {
-                mods |= AbstractEvents.MODIFIER_META;
-            }
-
-            switch (key) {
-                case GLFW_KEY_BACKSPACE:
-                    keyId = com.sun.glass.events.KeyEvent.VK_BACKSPACE;
-                    break;
-                case GLFW_KEY_LEFT:
-                    keyId = com.sun.glass.events.KeyEvent.VK_LEFT;
-                    break;
-                case GLFW_KEY_RIGHT:
-                    keyId = com.sun.glass.events.KeyEvent.VK_RIGHT;
-                    break;
-                case GLFW_KEY_UP:
-                    keyId = com.sun.glass.events.KeyEvent.VK_UP;
-                    break;
-                case GLFW_KEY_DOWN:
-                    keyId = com.sun.glass.events.KeyEvent.VK_DOWN;
-                    break;
-                case GLFW_KEY_TAB:
-                    keyId = com.sun.glass.events.KeyEvent.VK_TAB;
-                    break;
-                case GLFW_KEY_DELETE:
-                    keyId = com.sun.glass.events.KeyEvent.VK_DELETE;
-                    break;
-                case GLFW_KEY_HOME:
-                    keyId = com.sun.glass.events.KeyEvent.VK_HOME;
-                    break;
-                case GLFW_KEY_END:
-                    keyId = com.sun.glass.events.KeyEvent.VK_END;
-                    break;
-                case GLFW_KEY_PAGE_UP:
-                    keyId = com.sun.glass.events.KeyEvent.VK_PAGE_UP;
-                    break;
-                case GLFW_KEY_PAGE_DOWN:
-                    keyId = com.sun.glass.events.KeyEvent.VK_PAGE_DOWN;
-                    break;
-                case GLFW_KEY_INSERT:
-                    keyId = com.sun.glass.events.KeyEvent.VK_INSERT;
-                    break;
-                default:
-                    if ((key >= GLFW.GLFW_KEY_A && key <= GLFW.GLFW_KEY_Z) || (key >= GLFW.GLFW_KEY_0 && key <= GLFW.GLFW_KEY_9)) {
-                        keyId = key; // they're all the same -\_0_0_/-                        
-                    }
-            }
-
-            switch (action) {
-                case KEY_PRESSED:
-                case KEY_REPEAT:
-                    if (keyId > -1) {
-                        GLFX3DStage.this.emScene.keyEvent(
-                                AbstractEvents.KEYEVENT_PRESSED,
-                                keyId,
-                                new char[]{}, mods);
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.SHIFT)) {
-                        GLFX3DStage.this.shift = true;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.ALT)) {
-                        GLFX3DStage.this.alt = true;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.CONTROL)) {
-                        GLFX3DStage.this.ctrl = true;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.SUPER)) {
-                        GLFX3DStage.this.meta = true;
-                    }
-                    break;
-                case KEY_RELEASE:
-                    if (keyId > -1) {
-                        GLFX3DStage.this.emScene.keyEvent(
-                                AbstractEvents.KEYEVENT_RELEASED,
-                                keyId,
-                                new char[]{}, mods);
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.SHIFT)) {
-                        GLFX3DStage.this.shift = false;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.ALT)) {
-                        GLFX3DStage.this.alt = false;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.CONTROL)) {
-                        GLFX3DStage.this.ctrl = false;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.SUPER)) {
-                        GLFX3DStage.this.meta = false;
-                    }
-                    break;
-            }
+            doKeyEvent(key, scanCode, action, modifiers);
         }
     }
 
@@ -649,8 +558,7 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void charTypePerformed(GLWindow glw, char c) {
-            int mods = GLFX3DStage.this.ctrl ? AbstractEvents.MODIFIER_CONTROL : 0;
-            GLFX3DStage.this.emScene.keyEvent(AbstractEvents.KEYEVENT_TYPED, com.sun.glass.events.KeyEvent.VK_UNDEFINED, new char[]{c}, mods);
+            doKeyCharEvent(c);
         }
     }
 
@@ -674,52 +582,7 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void mouseButtonActionPerformed(GLWindow glw, int button, GLMouseButtonAction action, Set<GLKeyModifier> set) {
-            int buttonId = 0;
-
-            if (action == GLMouseButtonAction.PRESSED) {
-                GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
-                switch (button) {
-                    case 0:
-                        buttonId = AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON;
-                        leftButton = true;
-                        break;
-                    case 1:
-                        buttonId = AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON;
-                        rightButton = true;
-                        break;
-                    case 2:
-                        buttonId = AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON;
-                        middleButton = true;
-                        break;
-                }
-
-                GLFX3DStage.this.emScene.mouseEvent(
-                        AbstractEvents.MOUSEEVENT_PRESSED, buttonId,
-                        leftButton, middleButton, rightButton,
-                        mouseX, mouseY, mouseX, mouseY,
-                        shift, ctrl, alt, meta, 0, false);
-            } else if (action == GLMouseButtonAction.RELEASED) {
-                switch (button) {
-                    case 0:
-                        buttonId = AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON;
-                        leftButton = false;
-                        break;
-                    case 1:
-                        buttonId = AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON;
-                        rightButton = false;
-                        break;
-                    case 2:
-                        buttonId = AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON;
-                        middleButton = false;
-                        break;
-                }
-
-                GLFX3DStage.this.emScene.mouseEvent(
-                        AbstractEvents.MOUSEEVENT_RELEASED, buttonId,
-                        leftButton, middleButton, rightButton,
-                        mouseX, mouseY, mouseX, mouseY,
-                        shift, ctrl, alt, meta, 0, false);
-            }
+            doMouseButtonEvent(button, action, set);
         }
     }
 
@@ -733,44 +596,15 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void mousePositionActionPerformed(GLWindow glw, double x, double y) {
-            if (GLFX3DStage.this.emScene == null) {
-                return;
-            }
-            
-            MousePos mouse = transformMouse(x, y);
+            doMousePositionEvent(x, y);
+        }
+    }
+    
+    public class MouseScrollListener implements GLMouseScrollListener {
 
-            GLFX3DStage.this.mouseX = (int) mouse.x;
-            GLFX3DStage.this.mouseY = (int) mouse.y;
-
-            if (GLFX3DStage.this.leftButton) {
-                GLFX3DStage.this.emScene.mouseEvent(
-                        AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,
-                        GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
-                        GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
-                        GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
-                        0, false);
-            } else if (GLFX3DStage.this.rightButton) {
-                GLFX3DStage.this.emScene.mouseEvent(
-                        AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON,
-                        GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
-                        GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
-                        GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
-                        0, false);
-            } else if (GLFX3DStage.this.middleButton) {
-                GLFX3DStage.this.emScene.mouseEvent(
-                        AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON,
-                        GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
-                        GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
-                        GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
-                        0, false);
-            } else {
-                GLFX3DStage.this.emScene.mouseEvent(
-                        AbstractEvents.MOUSEEVENT_MOVED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
-                        GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
-                        GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
-                        GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
-                        0, false);
-            }
+        @Override
+        public void mouseScrollActionPerformed(GLWindow glw, double x, double y) {
+            doMouseScrollEvent(x, y);
         }
     }
 
@@ -782,13 +616,7 @@ public class GLFX3DStage extends GLObject {
         }
     }
 
-    public class StageScrollListener implements GLMouseScrollListener {
-
-        @Override
-        public void mouseScrollActionPerformed(GLWindow glw, double x, double y) {
-            GLFX3DStage.this.scroll(x, y);
-        }
-    }
+    
     private Reference<GLWindow> window = null;
     private final Set<Object> activeListeners = new HashSet<>();
 
@@ -800,7 +628,7 @@ public class GLFX3DStage extends GLObject {
         final GLKeyListener kListener = new KeyListener();
         final GLMouseButtonListener mbListener = new MouseButtonListener();
         final GLMousePositionListener mpListener = new MousePositionListener();
-        final GLMouseScrollListener msListener = new StageScrollListener();
+        final GLMouseScrollListener msListener = new MouseScrollListener();
         final GLFramebufferResizeListener fbListener = new StageResizeListener();
 
         activeListeners.addAll(Arrays.asList(kcListener, kListener, mbListener, mpListener, msListener, fbListener));
@@ -829,8 +657,8 @@ public class GLFX3DStage extends GLObject {
                 window.getMouse().removeButtonListener((MouseButtonListener) listener);
             } else if (listener instanceof MousePositionListener) {
                 window.getMouse().removePositionListener((MousePositionListener) listener);
-            } else if (listener instanceof StageScrollListener) {
-                window.getMouse().removeScrollListener((StageScrollListener) listener);
+            } else if (listener instanceof MouseScrollListener) {
+                window.getMouse().removeScrollListener((MouseScrollListener) listener);
             } else if (listener instanceof StageResizeListener) {
                 window.removeWindowResizeListener((StageResizeListener) listener);
             }
@@ -838,6 +666,238 @@ public class GLFX3DStage extends GLObject {
 
         activeListeners.clear();
         this.window = null;
+    }
+    
+    public void doKeyCharEvent(char c){
+        if(!focus){
+            return;
+        }
+
+        int mods = GLFX3DStage.this.ctrl ? AbstractEvents.MODIFIER_CONTROL : 0;
+        GLFX3DStage.this.emScene.keyEvent(AbstractEvents.KEYEVENT_TYPED, com.sun.glass.events.KeyEvent.VK_UNDEFINED, new char[]{c}, mods);
+    }
+    public void doKeyEvent(int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers){
+        if(!focus){
+            return;
+        }
+
+        int keyId = -1;
+        int mods = 0;
+
+        if (modifiers.contains(GLKeyModifier.ALT)) {
+            mods |= AbstractEvents.MODIFIER_ALT;
+        }
+
+        if (modifiers.contains(GLKeyModifier.CONTROL)) {
+            mods |= AbstractEvents.MODIFIER_CONTROL;
+        }
+
+        if (modifiers.contains(GLKeyModifier.SHIFT)) {
+            mods |= AbstractEvents.MODIFIER_SHIFT;
+        }
+
+        if (modifiers.contains(GLKeyModifier.SUPER)) {
+            mods |= AbstractEvents.MODIFIER_META;
+        }
+
+        switch (key) {
+            case GLFW_KEY_BACKSPACE:
+                keyId = com.sun.glass.events.KeyEvent.VK_BACKSPACE;
+                break;
+            case GLFW_KEY_LEFT:
+                keyId = com.sun.glass.events.KeyEvent.VK_LEFT;
+                break;
+            case GLFW_KEY_RIGHT:
+                keyId = com.sun.glass.events.KeyEvent.VK_RIGHT;
+                break;
+            case GLFW_KEY_UP:
+                keyId = com.sun.glass.events.KeyEvent.VK_UP;
+                break;
+            case GLFW_KEY_DOWN:
+                keyId = com.sun.glass.events.KeyEvent.VK_DOWN;
+                break;
+            case GLFW_KEY_TAB:
+                keyId = com.sun.glass.events.KeyEvent.VK_TAB;
+                break;
+            case GLFW_KEY_DELETE:
+                keyId = com.sun.glass.events.KeyEvent.VK_DELETE;
+                break;
+            case GLFW_KEY_HOME:
+                keyId = com.sun.glass.events.KeyEvent.VK_HOME;
+                break;
+            case GLFW_KEY_END:
+                keyId = com.sun.glass.events.KeyEvent.VK_END;
+                break;
+            case GLFW_KEY_PAGE_UP:
+                keyId = com.sun.glass.events.KeyEvent.VK_PAGE_UP;
+                break;
+            case GLFW_KEY_PAGE_DOWN:
+                keyId = com.sun.glass.events.KeyEvent.VK_PAGE_DOWN;
+                break;
+            case GLFW_KEY_INSERT:
+                keyId = com.sun.glass.events.KeyEvent.VK_INSERT;
+                break;
+            default:
+                if ((key >= GLFW.GLFW_KEY_A && key <= GLFW.GLFW_KEY_Z) || (key >= GLFW.GLFW_KEY_0 && key <= GLFW.GLFW_KEY_9)) {
+                    keyId = key; // they're all the same -\_0_0_/-                        
+                }
+        }
+
+        switch (action) {
+            case KEY_PRESSED:
+            case KEY_REPEAT:
+                if (keyId > -1) {
+                    GLFX3DStage.this.emScene.keyEvent(
+                            AbstractEvents.KEYEVENT_PRESSED,
+                            keyId,
+                            new char[]{}, mods);
+                }
+
+                if (modifiers.contains(GLKeyModifier.SHIFT)) {
+                    GLFX3DStage.this.shift = true;
+                }
+
+                if (modifiers.contains(GLKeyModifier.ALT)) {
+                    GLFX3DStage.this.alt = true;
+                }
+
+                if (modifiers.contains(GLKeyModifier.CONTROL)) {
+                    GLFX3DStage.this.ctrl = true;
+                }
+
+                if (modifiers.contains(GLKeyModifier.SUPER)) {
+                    GLFX3DStage.this.meta = true;
+                }
+                break;
+            case KEY_RELEASE:
+                if (keyId > -1) {
+                    GLFX3DStage.this.emScene.keyEvent(
+                            AbstractEvents.KEYEVENT_RELEASED,
+                            keyId,
+                            new char[]{}, mods);
+                }
+
+                if (modifiers.contains(GLKeyModifier.SHIFT)) {
+                    GLFX3DStage.this.shift = false;
+                }
+
+                if (modifiers.contains(GLKeyModifier.ALT)) {
+                    GLFX3DStage.this.alt = false;
+                }
+
+                if (modifiers.contains(GLKeyModifier.CONTROL)) {
+                    GLFX3DStage.this.ctrl = false;
+                }
+
+                if (modifiers.contains(GLKeyModifier.SUPER)) {
+                    GLFX3DStage.this.meta = false;
+                }
+                break;
+        }
+        
+    }
+    public void doMouseButtonEvent(int button, GLMouseButtonAction action, Set<GLKeyModifier> set){
+        int buttonId = 0;
+
+        if (action == GLMouseButtonAction.PRESSED) {
+            // TODO: should be removed since a parent needs to control whether a window is being occluded by another
+            /*
+            if(mouseX >= 0 && mouseY >= 0 && mouseX < width && mouseY < height){
+                setFocus(true);
+            }else{
+                setFocus(false);
+            }
+            */
+            GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
+            switch (button) {
+                case 0:
+                    buttonId = AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON;
+                    leftButton = true;
+                    break;
+                case 1:
+                    buttonId = AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON;
+                    rightButton = true;
+                    break;
+                case 2:
+                    buttonId = AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON;
+                    middleButton = true;
+                    break;
+            }
+
+            GLFX3DStage.this.emScene.mouseEvent(
+                    AbstractEvents.MOUSEEVENT_PRESSED, buttonId,
+                    leftButton, middleButton, rightButton,
+                    mouseX, mouseY, mouseX, mouseY,
+                    shift, ctrl, alt, meta, 0, false);
+        } else if (action == GLMouseButtonAction.RELEASED) {
+            switch (button) {
+                case 0:
+                    buttonId = AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON;
+                    leftButton = false;
+                    break;
+                case 1:
+                    buttonId = AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON;
+                    rightButton = false;
+                    break;
+                case 2:
+                    buttonId = AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON;
+                    middleButton = false;
+                    break;
+            }
+
+            GLFX3DStage.this.emScene.mouseEvent(
+                    AbstractEvents.MOUSEEVENT_RELEASED, buttonId,
+                    leftButton, middleButton, rightButton,
+                    mouseX, mouseY, mouseX, mouseY,
+                    shift, ctrl, alt, meta, 0, false);
+        }
+    }
+    public void doMousePositionEvent(double x, double y){
+        if (GLFX3DStage.this.emScene == null) {
+            return;
+        }
+
+        MousePos mouse = transformMouse(x, y);
+
+        GLFX3DStage.this.mouseX = (int) mouse.x;
+        GLFX3DStage.this.mouseY = (int) mouse.y;
+
+        if (GLFX3DStage.this.leftButton) {
+            GLFX3DStage.this.emScene.mouseEvent(
+                    AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,
+                    GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
+                    GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
+                    GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
+                    0, false);
+        } else if (GLFX3DStage.this.rightButton) {
+            GLFX3DStage.this.emScene.mouseEvent(
+                    AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON,
+                    GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
+                    GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
+                    GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
+                    0, false);
+        } else if (GLFX3DStage.this.middleButton) {
+            GLFX3DStage.this.emScene.mouseEvent(
+                    AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON,
+                    GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
+                    GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
+                    GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
+                    0, false);
+        } else {
+            GLFX3DStage.this.emScene.mouseEvent(
+                    AbstractEvents.MOUSEEVENT_MOVED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
+                    GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
+                    GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
+                    GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
+                    0, false);
+        }
+    }
+    public void doMouseScrollEvent(double x, double y){
+        if(!focus){
+            return;
+        }
+
+        GLFX3DStage.this.scroll(x, y);
     }
 
 }
