@@ -253,7 +253,7 @@ public abstract class GLApplication {
          * Retrieves all named parameters. Named parameters are declared as
          * '--[key]=[value]'.
          *
-         * @return a map of command line arguments.
+         * @return a map &lt;key, value&gt; of command line arguments.
          * @since 15.10.29
          */
         public Map<String, String> getNamed() {
