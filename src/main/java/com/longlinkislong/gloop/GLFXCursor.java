@@ -15,7 +15,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_IBEAM_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_VRESIZE_CURSOR;
 import static org.lwjgl.glfw.GLFW.glfwCreateStandardCursor;
 
-enum GLFXCursor {
+public enum GLFXCursor {
     WAIT(()->{
         return GLQuery.create(()->{
             
