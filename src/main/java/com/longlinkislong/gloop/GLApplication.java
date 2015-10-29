@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * An application that uses a GLWindow object.
  *
  * @author zmichaels
- * @sinec 15.10.29
+ * @since 15.10.29
  */
 public abstract class GLApplication {
 
