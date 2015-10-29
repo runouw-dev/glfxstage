@@ -106,6 +106,8 @@ public class GLFX3DStage extends GLObject {
     private final GLMat4F projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
     private boolean focus = true;
     private boolean useTransformMouse = true;
+    private boolean applyCursors = true;
+    private CursorType cursorType = CursorType.DEFAULT;
 
     public void setUseTransformMouse(boolean useTransformMouse) {
         this.useTransformMouse = useTransformMouse;
@@ -125,6 +127,14 @@ public class GLFX3DStage extends GLObject {
         if(focus == false){
             emStage.focusUngrab();
         }
+    }
+
+    public void setApplyCursors(boolean applyCursors) {
+        this.applyCursors = applyCursors;
+    }
+
+    public CursorType getCursorType() {
+        return cursorType;
     }
     
     
@@ -256,56 +266,58 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void setCursor(CursorFrame cursorFrame) {
-            final CursorType cursorType = cursorFrame.getCursorType();
-
-            switch (cursorType) {
-                case DEFAULT:
-                    updateCursor(GLFXCursor.DEFAULT);
-                    break;
-                case MOVE:
-                    updateCursor(GLFXCursor.MOVE);
-                    break;
-                case OPEN_HAND:
-                    updateCursor(GLFXCursor.OPEN_HAND);
-                    break;
-                case CROSSHAIR:
-                    updateCursor(GLFXCursor.CROSSHAIR);
-                    break;
-                case DISAPPEAR:
-                    updateCursor(GLFXCursor.DISAPPEAR);
-                    break;
-                case E_RESIZE:
-                    updateCursor(GLFXCursor.E_RESIZE);
-                    break;
-                case W_RESIZE:
-                    updateCursor(GLFXCursor.W_RESIZE);
-                    break;
-                case N_RESIZE:
-                    updateCursor(GLFXCursor.N_RESIZE);
-                    break;
-                case S_RESIZE:
-                    updateCursor(GLFXCursor.S_RESIZE);
-                    break;
-                case NE_RESIZE:
-                    updateCursor(GLFXCursor.NE_RESIZE);
-                    break;
-                case SE_RESIZE:
-                    updateCursor(GLFXCursor.SE_RESIZE);
-                    break;
-                case NW_RESIZE:
-                    updateCursor(GLFXCursor.NW_RESIZE);
-                    break;
-                case SW_RESIZE:
-                    updateCursor(GLFXCursor.SW_RESIZE);
-                    break;
-                case TEXT:
-                    updateCursor(GLFXCursor.TEXT);
-                    break;
-                case WAIT:
-                    updateCursor(GLFXCursor.WAIT);
-                    break;
-                default:
-                    break;
+            GLFX3DStage.this.cursorType = cursorFrame.getCursorType();
+            
+            if(applyCursors){
+                switch (GLFX3DStage.this.cursorType) {
+                    case DEFAULT:
+                        updateCursor(GLFXCursor.DEFAULT);
+                        break;
+                    case MOVE:
+                        updateCursor(GLFXCursor.MOVE);
+                        break;
+                    case OPEN_HAND:
+                        updateCursor(GLFXCursor.OPEN_HAND);
+                        break;
+                    case CROSSHAIR:
+                        updateCursor(GLFXCursor.CROSSHAIR);
+                        break;
+                    case DISAPPEAR:
+                        updateCursor(GLFXCursor.DISAPPEAR);
+                        break;
+                    case E_RESIZE:
+                        updateCursor(GLFXCursor.E_RESIZE);
+                        break;
+                    case W_RESIZE:
+                        updateCursor(GLFXCursor.W_RESIZE);
+                        break;
+                    case N_RESIZE:
+                        updateCursor(GLFXCursor.N_RESIZE);
+                        break;
+                    case S_RESIZE:
+                        updateCursor(GLFXCursor.S_RESIZE);
+                        break;
+                    case NE_RESIZE:
+                        updateCursor(GLFXCursor.NE_RESIZE);
+                        break;
+                    case SE_RESIZE:
+                        updateCursor(GLFXCursor.SE_RESIZE);
+                        break;
+                    case NW_RESIZE:
+                        updateCursor(GLFXCursor.NW_RESIZE);
+                        break;
+                    case SW_RESIZE:
+                        updateCursor(GLFXCursor.SW_RESIZE);
+                        break;
+                    case TEXT:
+                        updateCursor(GLFXCursor.TEXT);
+                        break;
+                    case WAIT:
+                        updateCursor(GLFXCursor.WAIT);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
