@@ -125,6 +125,13 @@ public class GLFX3DStage extends GLObject {
         System.out.println("Set focus " + focus);
         
         if(focus == false){
+            // release modifiers
+            this.shift = false;
+            this.alt = false;
+            this.ctrl = false;
+            this.meta = false;
+            
+            // I don't know if this line does anything
             emStage.focusUngrab();
         }
     }
