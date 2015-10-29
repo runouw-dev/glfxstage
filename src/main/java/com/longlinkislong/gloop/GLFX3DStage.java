@@ -829,14 +829,6 @@ public class GLFX3DStage extends GLObject {
         int buttonId = 0;
 
         if (action == GLMouseButtonAction.PRESSED) {
-            // TODO: should be removed since a parent needs to control whether a window is being occluded by another
-            /*
-            if(mouseX >= 0 && mouseY >= 0 && mouseX < width && mouseY < height){
-                setFocus(true);
-            }else{
-                setFocus(false);
-            }
-            */
             GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
             switch (button) {
                 case 0:
