@@ -579,6 +579,11 @@ public class GLFXStage extends GLObject {
                         keyId = key;
                     }
             }
+            
+            GLFXStage.this.shift = modifiers.contains(GLKeyModifier.SHIFT);
+            GLFXStage.this.alt = modifiers.contains(GLKeyModifier.ALT);
+            GLFXStage.this.ctrl = modifiers.contains(GLKeyModifier.CONTROL);
+            GLFXStage.this.meta = modifiers.contains(GLKeyModifier.SUPER);
 
             switch (action) {
                 case KEY_PRESSED:
@@ -590,21 +595,6 @@ public class GLFXStage extends GLObject {
                                 new char[]{}, mods);
                     }
 
-                    if (modifiers.contains(GLKeyModifier.SHIFT)) {
-                        GLFXStage.this.shift = true;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.ALT)) {
-                        GLFXStage.this.alt = true;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.CONTROL)) {
-                        GLFXStage.this.ctrl = true;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.SUPER)) {
-                        GLFXStage.this.meta = true;
-                    }
                     break;
                 case KEY_RELEASE:
                     if (keyId > -1) {
@@ -612,22 +602,6 @@ public class GLFXStage extends GLObject {
                                 AbstractEvents.KEYEVENT_RELEASED,
                                 keyId,
                                 new char[]{}, mods);
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.SHIFT)) {
-                        GLFXStage.this.shift = false;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.ALT)) {
-                        GLFXStage.this.alt = false;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.CONTROL)) {
-                        GLFXStage.this.ctrl = false;
-                    }
-
-                    if (modifiers.contains(GLKeyModifier.SUPER)) {
-                        GLFXStage.this.meta = false;
                     }
                     break;
             }

@@ -798,6 +798,11 @@ public class GLFX3DStage extends GLObject {
                     keyId = key; // they're all the same -\_0_0_/-                        
                 }
         }
+        
+        GLFX3DStage.this.shift = modifiers.contains(GLKeyModifier.SHIFT);
+        GLFX3DStage.this.alt = modifiers.contains(GLKeyModifier.ALT);
+        GLFX3DStage.this.ctrl = modifiers.contains(GLKeyModifier.CONTROL);
+        GLFX3DStage.this.meta = modifiers.contains(GLKeyModifier.SUPER);
 
         switch (action) {
             case KEY_PRESSED:
@@ -808,22 +813,6 @@ public class GLFX3DStage extends GLObject {
                             keyId,
                             new char[]{}, mods);
                 }
-
-                if (modifiers.contains(GLKeyModifier.SHIFT)) {
-                    GLFX3DStage.this.shift = true;
-                }
-
-                if (modifiers.contains(GLKeyModifier.ALT)) {
-                    GLFX3DStage.this.alt = true;
-                }
-
-                if (modifiers.contains(GLKeyModifier.CONTROL)) {
-                    GLFX3DStage.this.ctrl = true;
-                }
-
-                if (modifiers.contains(GLKeyModifier.SUPER)) {
-                    GLFX3DStage.this.meta = true;
-                }
                 break;
             case KEY_RELEASE:
                 if (keyId > -1) {
@@ -831,22 +820,6 @@ public class GLFX3DStage extends GLObject {
                             AbstractEvents.KEYEVENT_RELEASED,
                             keyId,
                             new char[]{}, mods);
-                }
-
-                if (modifiers.contains(GLKeyModifier.SHIFT)) {
-                    GLFX3DStage.this.shift = false;
-                }
-
-                if (modifiers.contains(GLKeyModifier.ALT)) {
-                    GLFX3DStage.this.alt = false;
-                }
-
-                if (modifiers.contains(GLKeyModifier.CONTROL)) {
-                    GLFX3DStage.this.ctrl = false;
-                }
-
-                if (modifiers.contains(GLKeyModifier.SUPER)) {
-                    GLFX3DStage.this.meta = false;
                 }
                 break;
         }
