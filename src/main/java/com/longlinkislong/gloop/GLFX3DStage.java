@@ -399,8 +399,8 @@ public class GLFX3DStage extends GLObject {
         this.resize(width, height);
     }
     
-    public void setEMLocation(){
-        this.emStage.setLocation(width, width);
+    public void setEMLocation(int x, int y){
+        this.emStage.setLocation(x, y);
     }
 
     private void setSceneImpl(final Scene scene) {

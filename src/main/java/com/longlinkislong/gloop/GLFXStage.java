@@ -407,8 +407,8 @@ public class GLFXStage extends GLObject {
         this.needsRecreate = true;
     }
     
-    public void setEMLocation(){
-        this.emStage.setLocation(width, width);
+    public void setEMLocation(int x, int y){
+        this.emStage.setLocation(x, y);
     }
 
     //TODO: determine if this should be public
