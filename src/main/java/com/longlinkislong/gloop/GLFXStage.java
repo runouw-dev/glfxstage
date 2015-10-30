@@ -406,6 +406,10 @@ public class GLFXStage extends GLObject {
 
         this.needsRecreate = true;
     }
+    
+    public void setEMLocation(){
+        this.emStage.setLocation(width, width);
+    }
 
     //TODO: determine if this should be public
     public final void scroll(final double deltaX, final double deltaY) {
@@ -424,6 +428,8 @@ public class GLFXStage extends GLObject {
     private volatile boolean needsUpdate = false;
 
     private void updateTexture() {
+        
+        
         if (this.emScene != null) {
             final int neededSize = this.width * this.height * Integer.BYTES;
 
