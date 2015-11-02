@@ -122,8 +122,6 @@ public class GLFX3DStage extends GLObject {
         
         this.focus = focus;
         
-        System.out.println("Set focus " + focus);
-        
         if(focus == false){
             // release modifiers
             this.shift = false;
