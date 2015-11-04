@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.longlinkislong.gloop;
 
 import com.longlinkislong.gloop.GLVertexArray.DrawArraysTask;
@@ -104,7 +99,7 @@ public class GLFX3DStage extends GLObject {
     private int width;
     private int height;
     private final GLMat4F projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
-    private boolean focus = true;
+    private boolean focus = false;
     private boolean useTransformMouse = true;
     private boolean applyCursors = true;
     private CursorType cursorType = CursorType.DEFAULT;
@@ -130,7 +125,12 @@ public class GLFX3DStage extends GLObject {
             this.meta = false;
             
             // I don't know if this line does anything
-            emStage.focusUngrab();
+            //emStage.focusUngrab();
+            System.out.println("Lost focus!");
+            GLFX3DStage.this.emStage.setFocused(false, AbstractEvents.FOCUSEVENT_DEACTIVATED);
+        }else{
+            System.out.println("Gain focus!");
+            GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
         }
     }
 
@@ -397,8 +397,18 @@ public class GLFX3DStage extends GLObject {
         this.resize(width, height);
     }
     
+    private int oldEMX = 0;
+    private int oldEMY = 0;
+    
     public void setEMLocation(int x, int y){
+         // caling the same position actually breaks menu components, so this avoids it
+        if(oldEMX == x && oldEMY == y){
+            return;
+        }
+        System.out.println("Set stage location! " + x + " " + y);
         this.emStage.setLocation(x, y);
+        oldEMX = x;
+        oldEMY = y;
     }
 
     private void setSceneImpl(final Scene scene) {
@@ -632,6 +642,8 @@ public class GLFX3DStage extends GLObject {
     private boolean middleButton = false;
     private int mouseX = 0;
     private int mouseY = 0;
+    private int mouseAbsX = 0;
+    private int mouseAbsY = 0;
     private boolean shift = false;
     private boolean alt = false;
     private boolean ctrl = false;
@@ -838,7 +850,7 @@ public class GLFX3DStage extends GLObject {
         int buttonId = 0;
 
         if (action == GLMouseButtonAction.PRESSED) {
-            GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
+            
             switch (button) {
                 case 0:
                     buttonId = AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON;
@@ -854,11 +866,13 @@ public class GLFX3DStage extends GLObject {
                     break;
             }
 
+            System.out.println("Internal fire " + button + " down");
             GLFX3DStage.this.emScene.mouseEvent(
                     AbstractEvents.MOUSEEVENT_PRESSED, buttonId,
                     leftButton, middleButton, rightButton,
                     mouseX, mouseY, mouseX, mouseY,
                     shift, ctrl, alt, meta, 0, false);
+            
         } else if (action == GLMouseButtonAction.RELEASED) {
             switch (button) {
                 case 0:
@@ -875,10 +889,11 @@ public class GLFX3DStage extends GLObject {
                     break;
             }
 
+            System.out.println("Internal fire " + button + " up");
             GLFX3DStage.this.emScene.mouseEvent(
                     AbstractEvents.MOUSEEVENT_RELEASED, buttonId,
                     leftButton, middleButton, rightButton,
-                    mouseX, mouseY, mouseX, mouseY,
+                    mouseX, mouseY, mouseAbsX, mouseAbsY,
                     shift, ctrl, alt, meta, 0, false);
         }
     }
@@ -891,31 +906,30 @@ public class GLFX3DStage extends GLObject {
 
         GLFX3DStage.this.mouseX = (int) mouse.x;
         GLFX3DStage.this.mouseY = (int) mouse.y;
+        GLFX3DStage.this.mouseAbsX = GLFX3DStage.this.mouseX + oldEMX;
+        GLFX3DStage.this.mouseAbsY = GLFX3DStage.this.mouseY + oldEMY;
+        
 
         if (GLFX3DStage.this.leftButton) {
-            GLFX3DStage.this.emScene.mouseEvent(
-                    AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,
+            GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,
                     GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
                     GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
                     GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
                     0, false);
         } else if (GLFX3DStage.this.rightButton) {
-            GLFX3DStage.this.emScene.mouseEvent(
-                    AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON,
+            GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON,
                     GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
                     GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
                     GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
                     0, false);
         } else if (GLFX3DStage.this.middleButton) {
-            GLFX3DStage.this.emScene.mouseEvent(
-                    AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON,
+            GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON,
                     GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
                     GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
                     GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
                     0, false);
         } else {
-            GLFX3DStage.this.emScene.mouseEvent(
-                    AbstractEvents.MOUSEEVENT_MOVED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
+            GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_MOVED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
                     GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
                     GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
                     GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
