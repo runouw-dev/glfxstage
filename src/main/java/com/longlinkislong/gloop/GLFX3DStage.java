@@ -126,10 +126,8 @@ public class GLFX3DStage extends GLObject {
             
             // I don't know if this line does anything
             //emStage.focusUngrab();
-            System.out.println("Lost focus!");
             GLFX3DStage.this.emStage.setFocused(false, AbstractEvents.FOCUSEVENT_DEACTIVATED);
         }else{
-            System.out.println("Gain focus!");
             GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
         }
     }
@@ -405,7 +403,6 @@ public class GLFX3DStage extends GLObject {
         if(oldEMX == x && oldEMY == y){
             return;
         }
-        System.out.println("Set stage location! " + x + " " + y);
         this.emStage.setLocation(x, y);
         oldEMX = x;
         oldEMY = y;
@@ -866,7 +863,6 @@ public class GLFX3DStage extends GLObject {
                     break;
             }
 
-            System.out.println("Internal fire " + button + " down");
             GLFX3DStage.this.emScene.mouseEvent(
                     AbstractEvents.MOUSEEVENT_PRESSED, buttonId,
                     leftButton, middleButton, rightButton,
@@ -889,7 +885,6 @@ public class GLFX3DStage extends GLObject {
                     break;
             }
 
-            System.out.println("Internal fire " + button + " up");
             GLFX3DStage.this.emScene.mouseEvent(
                     AbstractEvents.MOUSEEVENT_RELEASED, buttonId,
                     leftButton, middleButton, rightButton,
