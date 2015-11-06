@@ -126,9 +126,13 @@ public class GLFX3DStage extends GLObject {
             
             // I don't know if this line does anything
             //emStage.focusUngrab();
-            GLFX3DStage.this.emStage.setFocused(false, AbstractEvents.FOCUSEVENT_DEACTIVATED);
+            if(GLFX3DStage.this.emStage != null){
+                GLFX3DStage.this.emStage.setFocused(false, AbstractEvents.FOCUSEVENT_DEACTIVATED);
+            }
         }else{
-            GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
+            if(GLFX3DStage.this.emStage != null){
+                GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
+            }
         }
     }
 
@@ -151,10 +155,10 @@ public class GLFX3DStage extends GLObject {
         final GLBuffer verts = new GLBuffer();
 
         verts.upload(GLTools.wrapFloat(
-                -1f, 1f,
-                -1f, -1f,
-                 1f, 1f,
-                 1f, -1f));
+                0,  0f,
+                0,  1f,
+                1f, 0f,
+                1f, 1f));
 
         return verts;
     });
