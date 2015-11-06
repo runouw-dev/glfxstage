@@ -151,10 +151,10 @@ public class GLFX3DStage extends GLObject {
         final GLBuffer verts = new GLBuffer();
 
         verts.upload(GLTools.wrapFloat(
-                1f, 1f,
-                0f, 1f,
-                1f, 0f,
-                0f, 0f));
+                -1f, 1f,
+                -1f, -1f,
+                 1f, 1f,
+                 1f, -1f));
 
         return verts;
     });
@@ -162,10 +162,10 @@ public class GLFX3DStage extends GLObject {
         final GLBuffer texCoord = new GLBuffer();
 
         texCoord.upload(GLTools.wrapFloat(
-                1f, 1f,
+                0f, 0f,
                 0f, 1f,
                 1f, 0f,
-                0f, 0f));
+                1f, 1f));
 
         return texCoord;
     });
