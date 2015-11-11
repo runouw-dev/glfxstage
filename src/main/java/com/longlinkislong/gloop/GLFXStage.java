@@ -78,10 +78,10 @@ public class GLFXStage extends GLObject {
 
         verts.setName("GLFXStage.verts");
         verts.upload(GLTools.wrapFloat(
-                1f, -1f,
+                -1f, 1f,
                 -1f, -1f,
-                1f, 1f,
-                -1f, 1f));
+                 1f, 1f,
+                 1f, -1f));
 
         return verts;
     });
@@ -90,10 +90,10 @@ public class GLFXStage extends GLObject {
 
         texCoord.setName("GLFXStage.vUVs");
         texCoord.upload(GLTools.wrapFloat(
-                1f, 1f,
+                0f, 0f,
                 0f, 1f,
                 1f, 0f,
-                0f, 0f));
+                1f, 1f));
 
         return texCoord;
     });
@@ -414,6 +414,10 @@ public class GLFXStage extends GLObject {
 
         this.needsRecreate = true;
     }
+    
+    public void setEMLocation(int x, int y){
+        this.emStage.setLocation(x, y);
+    }
 
     //TODO: determine if this should be public
     public final void scroll(final double deltaX, final double deltaY) {
@@ -432,6 +436,8 @@ public class GLFXStage extends GLObject {
     private volatile boolean needsUpdate = false;
 
     private void updateTexture() {
+        
+        
         if (this.emScene != null) {
             final int neededSize = this.width * this.height * Integer.BYTES;
 
