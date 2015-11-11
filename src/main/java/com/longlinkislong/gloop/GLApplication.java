@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+
+import org.slf4j.LoggerFactory;
 
 /**
  * An application that uses a GLWindow object.
@@ -22,14 +25,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public abstract class GLApplication {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GLApplication.class);
     private GLWindow window;
     private Parameters parameters = new Parameters(null);
     final AtomicBoolean gloopInit = new AtomicBoolean(false);
+    int initialWindowWidth = 640;
+    int initialWindowHeight = 480;
+    String initialWindowTitle = this.getClass().getSimpleName();
 
     void setWindow(final GLWindow window) {
         this.window = window;
     }
-    
+
     /**
      * Requests the GLWindow Object. This may return an empty Optional if the
      * GLWindow has not yet been initialized.
@@ -42,6 +49,7 @@ public abstract class GLApplication {
 
     void setParameters(final Parameters params) {
         this.parameters = params;
+        LOGGER.trace("Set GLApplication parameters to: {}", params);
     }
 
     /**
@@ -55,20 +63,35 @@ public abstract class GLApplication {
     }
 
     /**
-     * Retrieves the application's title. This is used for setting the GLWindow
-     * title. Its default behavior is to return the simple name of the
-     * Application class.
+     * Enables off-heap vectors and initializes the reference cache to 20000.
+     * This must be called in either the constructor or the init method.
      *
-     * @return the application title.
-     * @since 15.10.29
+     * @since 15.11.11
      */
-    public String getTitle() {
-        return this.getClass().getSimpleName();
+    public final void enableOffHeapVectors() {
+        this.enableOffHeapVectors(20000);
+    }
+
+    /**
+     * Enabled off-heap vectors. This must be called in either the constructor
+     * or the init method.
+     *
+     * @param offHeapSize the number of references to allow off-heap.
+     * @since 15.11.11
+     */
+    public final void enableOffHeapVectors(int offHeapSize) {
+        if (this.gloopInit.get()) {
+            throw new IllegalStateException("Off-heap vectors can only be enabled before Gloop is initialized!");
+        }
+
+        this.setProperty("gloop.object_mapper", "com.longlinkislong.gloop.OffHeapMapper");
+        this.setProperty("gloop.offheapmapper.max_refs", offHeapSize);
     }
 
     /**
      * Enables the debug output specified by gloop. This must be called in
-     * either the constructor or the init method.
+     * either the constructor or the init method. This will only work if
+     * slf4j-simple is used.
      *
      * @throws IllegalStateException if called after GLWindow is created.
      * @since 15.10.29
@@ -78,7 +101,71 @@ public abstract class GLApplication {
             throw new IllegalStateException("Debug can only be enabled before Gloop is initialized!");
         }
 
-        System.setProperty("debug", "true");
+        try {
+            Class.forName("org.slf4j.impl.SimpleLogger");
+            System.setProperty("org.slf4j.simpleLogger.log.com.longlinkislong.gloop", "debug");
+            LOGGER.info("Set logging level for package: com.longlinkislong.gloop to debug.");
+        } catch (ClassNotFoundException ex) {
+            LOGGER.warn("Could not find SLF4J on classpath! GLApplication.enableDebug() only works with SLF4J-Simple.");
+        }
+
+    }
+
+    /**
+     * Enabled the trace output for gloop logs. This must be called in either
+     * the constructor or the init method. This will only work if slf4j-simple
+     * is used.
+     *
+     * @throws IllegalStateException if called after GLWindow is created.
+     * @since 15.11.11
+     */
+    public final void enableTrace() {
+        if (this.gloopInit.get()) {
+            throw new IllegalStateException("Trace can only be enabled before Gloop is initialized!");
+        }
+
+        try {
+            Class.forName("org.slf4j.impl.SimpleLogger");
+            System.setProperty("org.slf4j.simpleLogger.log.com.longlinkislong.gloop", "trace");
+        } catch (ClassNotFoundException ex) {
+            LOGGER.warn("Could not find SLF4J on classpath! GLApplication.enableTrace() only works with SLF4J-Simple");
+        }
+    }
+
+    /**
+     * Sets the title of the window. This must be called in either the
+     * constructor or the init method.
+     *
+     * @param title the title to use.
+     * @throws IllegalStateException if called after GLWindow is created.
+     * @since 15.10.29
+     */
+    public final void setTitle(final CharSequence title) {
+        if (this.gloopInit.get()) {
+            throw new IllegalStateException("The window title can only be set before gloop is initialized!");
+        }
+
+        this.initialWindowTitle = title.toString();
+        LOGGER.trace("Set GLApplication.window.title = {}", title);
+    }
+
+    /**
+     * Sets the initial size of the window. This must be called in either the
+     * constructor or the init method.
+     *
+     * @param width the initial width of the window.
+     * @param height the initial height of the window.
+     * @throws IllegalStateException if called after GLWindow is created.
+     * @since 15.10.29
+     */
+    public final void setInitialWindowSize(final int width, final int height) {
+        if (this.gloopInit.get()) {
+            throw new IllegalStateException("The initial window size can only be set before gloop is initialized!");
+        }
+
+        this.initialWindowWidth = width;
+        this.initialWindowHeight = height;
+        LOGGER.trace("Set GLApplication window initial size to [width={}, height={}]", width, height);
     }
 
     /**
@@ -94,6 +181,7 @@ public abstract class GLApplication {
         }
 
         GLApplication.class.getClassLoader().setPackageAssertionStatus("com.longlinkislong.gloop", true);
+        LOGGER.trace("Enabled assertions on package: com.longlinkislong.gloop!");
     }
 
     /**
@@ -111,6 +199,7 @@ public abstract class GLApplication {
         }
 
         System.setProperty(property, value.toString());
+        LOGGER.trace("Set system property [{}] = [{}]", property, value);
     }
 
     /**
@@ -155,6 +244,7 @@ public abstract class GLApplication {
      * @param args the unprocessed command line arguments.
      * @since 15.10.29
      */
+    @SuppressWarnings("unchecked")
     public static void launch(String... args) {
         // based on javafx.application.Application.launch
         StackTraceElement[] cause = Thread.currentThread().getStackTrace();
@@ -185,6 +275,7 @@ public abstract class GLApplication {
             if (GLApplication.class.isAssignableFrom(theClass)) {
                 final Class<? extends GLApplication> appClass = (Class<? extends GLApplication>) theClass;
 
+                LOGGER.trace("Launching application: [{}]!", appClass.getSimpleName());
                 GLApplicationLauncher.getInstance().launchApplication(appClass, args);
             } else {
                 throw new RuntimeException(String.format("Error: %s is not a subclass of com.longlinkislong.gloop.GLApplication", theClass));
@@ -280,6 +371,11 @@ public abstract class GLApplication {
          */
         public List<String> getUnnamed() {
             return Collections.unmodifiableList(this.unnamedArgs);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("named: %s, unnamed: %s", getNamed(), getUnnamed());
         }
     }
 }

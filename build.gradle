@@ -23,7 +23,8 @@ repositories {
     maven { url 'http://jartifacts.longlinkislong.com/libs-release' }
 }
 
-dependencies {    
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.+'
     compile 'com.longlinkislong:gloop:1.2+'
     testCompile 'junit:junit:4.10'    
 }

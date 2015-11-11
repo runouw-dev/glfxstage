@@ -41,6 +41,10 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 /**
  * GLFXStage is an OpenGL object that can contain and render JavaFX scene
@@ -51,11 +55,12 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
  */
 public class GLFXStage extends GLObject {
 
-    private static final boolean DEBUG;
+    private static final Marker JAVAFX_MARKER = MarkerFactory.getMarker("JAVAFX");
+    private static final Logger LOGGER = LoggerFactory.getLogger(GLFXStage.class);
 
     static {
-        DEBUG = Boolean.getBoolean("debug") && !System.getProperty("debug.exclude", "").contains("glfxstage");
         PlatformImpl.startup(() -> {
+            LOGGER.debug(JAVAFX_MARKER, "JavaFX initialized!");
         });
     }
 
@@ -71,6 +76,7 @@ public class GLFXStage extends GLObject {
     private final Lazy<GLBuffer> vPos = new Lazy<>(() -> {
         final GLBuffer verts = new GLBuffer();
 
+        verts.setName("GLFXStage.verts");
         verts.upload(GLTools.wrapFloat(
                 1f, -1f,
                 -1f, -1f,
@@ -82,6 +88,7 @@ public class GLFXStage extends GLObject {
     private final Lazy<GLBuffer> vUVs = new Lazy<>(() -> {
         final GLBuffer texCoord = new GLBuffer();
 
+        texCoord.setName("GLFXStage.vUVs");
         texCoord.upload(GLTools.wrapFloat(
                 1f, 1f,
                 0f, 1f,
@@ -110,6 +117,7 @@ public class GLFXStage extends GLObject {
 
             final GLProgram program = new GLProgram();
 
+            program.setName("GLFXStage.PROGRAM");
             program.setVertexAttributes(ATTRIBUTES);
             program.linkShaders(shVsh, shFsh);
 
@@ -125,8 +133,9 @@ public class GLFXStage extends GLObject {
     });
 
     private final Lazy<GLVertexArray> vao = new Lazy<>(() -> {
-        final GLVertexArray vaoObj = new GLVertexArray();
+        final GLVertexArray vaoObj = new GLVertexArray(this.getThread());
 
+        vaoObj.setName("GLFXStage.vao");
         vaoObj.attachBuffer(
                 ATTRIBUTES.getLocation("vPos"), this.vPos.get(),
                 GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2);
@@ -386,9 +395,8 @@ public class GLFXStage extends GLObject {
      * @since 15.09.21
      */
     public final void resize(final int newWidth, final int newHeight) {
-        if (DEBUG) {
-            System.out.printf("[GLFXStage] Requested resize: <%d, %d>\n", newWidth, newHeight);
-        }
+        LOGGER.trace("Requested resize: [width={}, height={}]", newWidth, newHeight);
+        
         if (newWidth > 0 && newHeight > 0) {
             this.width = newWidth;
             this.height = newHeight;
@@ -400,8 +408,8 @@ public class GLFXStage extends GLObject {
             if (this.emStage != null) {
                 this.emStage.setSize(width, height);
             }
-        } else if (DEBUG) {
-            System.err.println("[GLFXStage] Resize rejected; width or height is less than 1.");
+        } else {
+            LOGGER.debug("Resize rejected; width or height is less than 1.");            
         }
 
         this.needsRecreate = true;
@@ -434,8 +442,8 @@ public class GLFXStage extends GLObject {
 
                 this.tBuffer.rewind();
                 this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
-            } else if (DEBUG) {
-                System.err.println("[GLFXStage] Request to read 0 bytes ignored!");
+            } else {
+                LOGGER.debug("Request to read 0 bytes ignored.");                
             }
         }
     }
@@ -450,9 +458,8 @@ public class GLFXStage extends GLObject {
     }
 
     private void updateCursor(final GLFXCursor cursor) {
-        if (DEBUG) {
-            System.out.println("[GLFXStage] Set cursor to: " + cursor);
-        }
+        LOGGER.debug("Cursor set to {}", cursor);
+        
         if (this.window == null || this.window.get() == null) {
             cursor.apply(GLWindow.listActiveWindows().get(0));
         } else {
@@ -479,8 +486,8 @@ public class GLFXStage extends GLObject {
                             .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height);
 
                     this.needsRecreate = false;
-                } else if (DEBUG) {
-                    System.out.printf("[GLFXStage] Ignored invalid request to resize texture to <%d, %d>\n", this.width, this.height);
+                } else {
+                    LOGGER.debug("Ignord invalid request to resize texture to [width={}, height={}]", this.width, this.height);                    
                 }
             }
 
@@ -579,7 +586,7 @@ public class GLFXStage extends GLObject {
                         keyId = key;
                     }
             }
-            
+
             GLFXStage.this.shift = modifiers.contains(GLKeyModifier.SHIFT);
             GLFXStage.this.alt = modifiers.contains(GLKeyModifier.ALT);
             GLFXStage.this.ctrl = modifiers.contains(GLKeyModifier.CONTROL);

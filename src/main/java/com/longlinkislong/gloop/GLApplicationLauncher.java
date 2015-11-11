@@ -9,13 +9,15 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author zmichaels
  */
 class GLApplicationLauncher {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(GLApplicationLauncher.class);
     private static class Holder {
 
         private static final GLApplicationLauncher INSTANCE = new GLApplicationLauncher();
@@ -78,12 +80,14 @@ class GLApplicationLauncher {
             
             app = c.newInstance();            
             app.setParameters(new GLApplication.Parameters(args));
+            LOGGER.trace("Constructed {}", app.getClass().getName());
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException t) {
             throw new RuntimeException("Unable to construct GLApplication", t);
         }        
 
         try {
             app.init();
+            LOGGER.trace("Initialized {}", app.getClass().getName());
         } catch (Throwable t) {
             throw new RuntimeException("Unable to initialize GLApplication", t);
         }
@@ -93,14 +97,15 @@ class GLApplicationLauncher {
         try {
             app.gloopInit.set(true);
             
-            final GLWindow window = new GLWindow(640, 480, app.getTitle());        
+            final GLWindow window = new GLWindow(app.initialWindowWidth, app.initialWindowHeight, app.initialWindowTitle);
             final GLApplication theApp = app;
 
             window.setOnClose(() -> {
                 try {
                     theApp.stop();
                     theApp.setWindow(null);
-                } catch (Throwable t) {
+                    LOGGER.trace("Stopped {}", theApp.getClass().getName());
+                } catch (Throwable t) {                    
                     stopException = t;                    
                 } finally {
                     shutdownLatch.countDown();
@@ -108,7 +113,8 @@ class GLApplicationLauncher {
             });
 
             app.setWindow(window);
-            app.start(window);
+            LOGGER.trace("Starting {}", app.getClass().getName());
+            app.start(window);            
             
             window.getGLThread().scheduleGLTask(GLTask.create(app::draw));
             window.getGLThread().scheduleGLTask(window.new UpdateTask());

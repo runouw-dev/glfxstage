@@ -41,6 +41,10 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 /**
  * GLFX3DStage is an OpenGL object that can contain and render JavaFX scene
@@ -51,19 +55,18 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
  */
 public class GLFX3DStage extends GLObject {
 
+    private static final Marker JAVAFX_MARKER = MarkerFactory.getMarker("JAVAFX");
+    private static final Logger LOGGER = LoggerFactory.getLogger(GLFX3DStage.class);
+
     /**
-     * TODO:
-     * Show window with a dimmed color transform when unfocused (or expose
+     * TODO: Show window with a dimmed color transform when unfocused (or expose
      * color transforms)
-     * 
+     *
      */
-    
-    private static final boolean DEBUG;
 
     static {
-        DEBUG = Boolean.getBoolean("debug") && !System.getProperty("debug.exclude", "").contains("glfx3dstage");
-
         PlatformImpl.startup(() -> {
+            LOGGER.debug(JAVAFX_MARKER, "JavaFX initialized!");
         });
     }
 
@@ -83,9 +86,9 @@ public class GLFX3DStage extends GLObject {
             this.y = y;
         }
     }
-    
-    private MousePos transformMouse(double x, double y){
-        if(useTransformMouse){
+
+    private MousePos transformMouse(double x, double y) {
+        if (useTransformMouse) {
             x /= Math.max(windowWidth, 1);
             y /= Math.max(windowHeight, 1);
 
@@ -95,7 +98,7 @@ public class GLFX3DStage extends GLObject {
             x = after.x() * width;
             y = after.y() * height;
         }
-        
+
         return new MousePos(x, y);
     }
 
@@ -112,25 +115,24 @@ public class GLFX3DStage extends GLObject {
     public void setUseTransformMouse(boolean useTransformMouse) {
         this.useTransformMouse = useTransformMouse;
     }
-    
 
     public void setFocus(boolean focus) {
-        if(this.focus == focus){
+        if (this.focus == focus) {
             // no change
             return;
         }
-        
+
         this.focus = focus;
-        
+
         System.out.println("Set focus " + focus);
-        
-        if(focus == false){
+
+        if (focus == false) {
             // release modifiers
             this.shift = false;
             this.alt = false;
             this.ctrl = false;
             this.meta = false;
-            
+
             // I don't know if this line does anything
             emStage.focusUngrab();
         }
@@ -143,8 +145,7 @@ public class GLFX3DStage extends GLObject {
     public CursorType getCursorType() {
         return cursorType;
     }
-    
-    
+
     private volatile EmbeddedWindow stage;
     private EmbeddedSceneInterface emScene;
     private EmbeddedStageInterface emStage;
@@ -154,6 +155,7 @@ public class GLFX3DStage extends GLObject {
     private final Lazy<GLBuffer> vPos = new Lazy<>(() -> {
         final GLBuffer verts = new GLBuffer();
 
+        verts.setName("GLFX3DStage.verts");
         verts.upload(GLTools.wrapFloat(
                 1f, 1f,
                 0f, 1f,
@@ -165,6 +167,7 @@ public class GLFX3DStage extends GLObject {
     private final Lazy<GLBuffer> vUVs = new Lazy<>(() -> {
         final GLBuffer texCoord = new GLBuffer();
 
+        texCoord.setName("GLFX3DStage.vUVs");
         texCoord.upload(GLTools.wrapFloat(
                 1f, 1f,
                 0f, 1f,
@@ -193,6 +196,7 @@ public class GLFX3DStage extends GLObject {
 
             final GLProgram program = new GLProgram();
 
+            program.setName("GLFX3DStage.PROGRAM");
             program.setVertexAttributes(ATTRIBUTES);
             program.linkShaders(shVsh, shFsh);
 
@@ -208,8 +212,9 @@ public class GLFX3DStage extends GLObject {
     });
 
     private final Lazy<GLVertexArray> vao = new Lazy<>(() -> {
-        final GLVertexArray vaoObj = new GLVertexArray();
+        final GLVertexArray vaoObj = new GLVertexArray(this.getThread());
 
+        vaoObj.setName("GLFX3DStage.vao");
         vaoObj.attachBuffer(
                 ATTRIBUTES.getLocation("vPos"), this.vPos.get(),
                 GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2);
@@ -274,8 +279,8 @@ public class GLFX3DStage extends GLObject {
         @Override
         public void setCursor(CursorFrame cursorFrame) {
             GLFX3DStage.this.cursorType = cursorFrame.getCursorType();
-            
-            if(applyCursors){
+
+            if (applyCursors) {
                 switch (GLFX3DStage.this.cursorType) {
                     case DEFAULT:
                         updateCursor(GLFXCursor.DEFAULT);
@@ -388,15 +393,9 @@ public class GLFX3DStage extends GLObject {
      * @since 15.09.21
      */
     public GLFX3DStage(final int width, final int height) {
-        super();
+        this(GLThread.getDefaultInstance(), width, height);
 
-        if (width < 1) {
-            throw new IllegalArgumentException(String.format("Width [%d] must be at leats 1!", width));
-        } else if (height < 1) {
-            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
-        }
-
-        this.resize(width, height);
+        LOGGER.warn("Constructing GLFX3DStage object on arbitrary GLThreads is discouraged.");
     }
 
     private void setSceneImpl(final Scene scene) {
@@ -465,8 +464,8 @@ public class GLFX3DStage extends GLObject {
         if (newWidth > 0 && newHeight > 0) {
             this.windowWidth = newWidth;
             this.windowHeight = newHeight;
-        } else if (DEBUG) {
-            System.err.println("[GLFX3DStage] Parent window resize rejected; width or height is less than 1.");
+        } else {
+            LOGGER.debug("Parent window resize rejected; width or height is less than 1.");
         }
     }
 
@@ -478,9 +477,7 @@ public class GLFX3DStage extends GLObject {
      * @since 15.09.21
      */
     public final void resize(final int newWidth, final int newHeight) {
-        if (DEBUG) {
-            System.out.printf("[GLFX3DStage] Requested resize: <%d, %d\n", newWidth, newHeight);
-        }
+        LOGGER.trace("Requested resize: [{}, {}]", newWidth, newHeight);
 
         if (newWidth > 0 && newHeight > 0) {
             this.width = newWidth;
@@ -495,8 +492,8 @@ public class GLFX3DStage extends GLObject {
             }
 
             this.needsRecreate = true;
-        } else if (DEBUG) {
-            System.err.println("[GLFX3DStage] Resize rejected; width or height is less than 1.");
+        } else {
+            LOGGER.debug("Resize rejected; width or height is less than 1.");            
         }
     }
 
@@ -525,8 +522,8 @@ public class GLFX3DStage extends GLObject {
 
                 this.tBuffer.rewind();
                 this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
-            } else if (DEBUG) {
-                System.err.println("[GLFX3DStage] Request to read 0 bytes ignored!");
+            } else {
+                LOGGER.trace("Request to read 0 bytes ignored.");                
             }
         }
     }
@@ -571,8 +568,8 @@ public class GLFX3DStage extends GLObject {
                             .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height);
 
                     this.needsRecreate = false;
-                } else if (DEBUG) {
-                    System.out.printf("[GLFX3DStage] Ignored invalid request to resize texture to <%d, %d>\n", this.width, this.height);
+                } else {
+                    LOGGER.debug("Ignored invalid request to resize texture to [width={}, height={}]", this.width, this.height);                    
                 }
             }
 
@@ -662,7 +659,7 @@ public class GLFX3DStage extends GLObject {
             doMousePositionEvent(x, y);
         }
     }
-    
+
     public class MouseScrollListener implements GLMouseScrollListener {
 
         @Override
@@ -679,7 +676,6 @@ public class GLFX3DStage extends GLObject {
         }
     }
 
-    
     private Reference<GLWindow> window = null;
     private final Set<Object> activeListeners = new HashSet<>();
 
@@ -730,17 +726,18 @@ public class GLFX3DStage extends GLObject {
         activeListeners.clear();
         this.window = null;
     }
-    
-    public void doKeyCharEvent(char c){
-        if(!focus){
+
+    public void doKeyCharEvent(char c) {
+        if (!focus) {
             return;
         }
 
         int mods = GLFX3DStage.this.ctrl ? AbstractEvents.MODIFIER_CONTROL : 0;
         GLFX3DStage.this.emScene.keyEvent(AbstractEvents.KEYEVENT_TYPED, com.sun.glass.events.KeyEvent.VK_UNDEFINED, new char[]{c}, mods);
     }
-    public void doKeyEvent(int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers){
-        if(!focus){
+
+    public void doKeyEvent(int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers) {
+        if (!focus) {
             return;
         }
 
@@ -805,7 +802,7 @@ public class GLFX3DStage extends GLObject {
                     keyId = key; // they're all the same -\_0_0_/-                        
                 }
         }
-        
+
         GLFX3DStage.this.shift = modifiers.contains(GLKeyModifier.SHIFT);
         GLFX3DStage.this.alt = modifiers.contains(GLKeyModifier.ALT);
         GLFX3DStage.this.ctrl = modifiers.contains(GLKeyModifier.CONTROL);
@@ -830,9 +827,10 @@ public class GLFX3DStage extends GLObject {
                 }
                 break;
         }
-        
+
     }
-    public void doMouseButtonEvent(int button, GLMouseButtonAction action, Set<GLKeyModifier> set){
+
+    public void doMouseButtonEvent(int button, GLMouseButtonAction action, Set<GLKeyModifier> set) {
         int buttonId = 0;
 
         if (action == GLMouseButtonAction.PRESSED) {
@@ -880,7 +878,8 @@ public class GLFX3DStage extends GLObject {
                     shift, ctrl, alt, meta, 0, false);
         }
     }
-    public void doMousePositionEvent(double x, double y){
+
+    public void doMousePositionEvent(double x, double y) {
         if (GLFX3DStage.this.emScene == null) {
             return;
         }
@@ -920,8 +919,9 @@ public class GLFX3DStage extends GLObject {
                     0, false);
         }
     }
-    public void doMouseScrollEvent(double x, double y){
-        if(!focus){
+
+    public void doMouseScrollEvent(double x, double y) {
+        if (!focus) {
             return;
         }
 

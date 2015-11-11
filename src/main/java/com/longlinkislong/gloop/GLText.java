@@ -13,6 +13,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An object that represents visible text.
@@ -22,6 +24,7 @@ import java.util.Optional;
  */
 public class GLText extends GLObject implements CharSequence {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GLText.class);
     private static Optional<GLProgram> DEFAULT_TEXT_RENDERER = Optional.empty();
     private static final String DEFAULT_SAMPLER_UNAME = "uFont";
     private static final String DEFAULT_PROJECTION_UNAME = "uProj";
@@ -73,11 +76,16 @@ public class GLText extends GLObject implements CharSequence {
         this.font = Objects.requireNonNull(font);
 
         this.vPos = new GLBuffer(thread);
+        this.vPos.setName("GLText.vPos");
         this.vCol = new GLBuffer(thread);
+        this.vCol.setName("GLText.vCol");
         this.vUVs = new GLBuffer(thread);
+        this.vUVs.setName("GLText.vUVs");
         this.vao = new GLVertexArray(thread);
+        this.vao.setName("GLText.vao");
 
         setText(seq.toString());
+        LOGGER.trace("Constructed GLText object on thread: {}", thread);
     }
 
     /**
@@ -101,7 +109,8 @@ public class GLText extends GLObject implements CharSequence {
                 this.vao.new InitTask(),
                 this.vPos.new InitTask(),
                 this.vCol.new InitTask(),
-                this.vUVs.new InitTask());
+                this.vUVs.new InitTask(),
+                GLTask.create(() -> LOGGER.trace("GLText object initialized!")));
     }
 
     @Override
@@ -115,13 +124,14 @@ public class GLText extends GLObject implements CharSequence {
     }
 
     @Override
-    public CharSequence subSequence(final int start, final int end) {
+    public CharSequence subSequence(final int start, final int end) {        
         return new GLText(this.font, this.text.subSequence(start, end));
     }
 
     private static GLProgram newDefaultTextRenderer() {
         final GLProgram program = new GLProgram();
 
+        program.setName("GLText.defaultTextRenderer");
         program.setVertexAttributes(DEFAULT_ATTRIBUTES);
 
         try (
@@ -138,7 +148,7 @@ public class GLText extends GLObject implements CharSequence {
             throw new GLException("Unable to parse default text shader!", ex);
         }
 
-        DEFAULT_TEXT_RENDERER = Optional.of(program);
+        DEFAULT_TEXT_RENDERER = Optional.of(program);        
 
         return program;
     }
@@ -383,11 +393,12 @@ public class GLText extends GLObject implements CharSequence {
             final CharSequence uProj, final CharSequence uTrans,
             final CharSequence uName) {
 
+        LOGGER.trace("Replaced text renderer with [{}]! Old renderer: [{}].", this.program.orElse(getDefaultTextRenderer()).getName(), program != null ? program.getName() : getDefaultTextRenderer().getName());
         this.program = Optional.ofNullable(program);
         this.vAttribs = Optional.ofNullable(attribs);
         this.uSampler = Optional.ofNullable(uName.toString());
         this.uProj = Optional.ofNullable(uProj.toString());
-        this.uTrans = Optional.ofNullable(uTrans.toString());
+        this.uTrans = Optional.ofNullable(uTrans.toString());                
     }
 
     /**
@@ -397,6 +408,7 @@ public class GLText extends GLObject implements CharSequence {
      * @since 15.06.11
      */
     public void restoreTextRenderer() {
+        LOGGER.trace("Replaced text renderer with default text renderer.");
         this.program = Optional.empty();
         this.vAttribs = Optional.empty();
         this.uSampler = Optional.empty();
@@ -428,7 +440,7 @@ public class GLText extends GLObject implements CharSequence {
             final GLMat4 pr, final GLMat4 tr,
             final int target, final float percent) {
 
-        this.newDrawTask(pr, tr, target, percent).glRun(this.getThread());       
+        this.newDrawTask(pr, tr, target, percent).glRun(this.getThread());
     }
 
     /**
@@ -514,7 +526,8 @@ public class GLText extends GLObject implements CharSequence {
                 this.vao.new DeleteTask(),
                 this.vPos.new DeleteTask(),
                 this.vCol.new DeleteTask(),
-                this.vUVs.new DeleteTask());
+                this.vUVs.new DeleteTask(),
+                GLTask.create(()-> LOGGER.trace("Deleting GLText object!")));
     }
 
     @Override
