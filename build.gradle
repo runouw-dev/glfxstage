@@ -24,8 +24,10 @@ repositories {
 }
 
 dependencies {
+    def gloopVersion = "${versionUrl}?name=gloop".toURL().text.trim()
+    
     compile 'org.slf4j:slf4j-api:1.7.+'
-    compile 'com.longlinkislong:gloop:1.2+'
+    compile "com.longlinkislong:gloop:${gloopVersion}"
     testCompile 'junit:junit:4.10'    
 }
 
