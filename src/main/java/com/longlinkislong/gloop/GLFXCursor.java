@@ -6,6 +6,8 @@
 package com.longlinkislong.gloop;
 
 import java.util.function.LongSupplier;
+import com.runouw.util.Lazy;
+
 import static org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CROSSHAIR_CURSOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_HIDDEN;

@@ -5,6 +5,7 @@
  */
 package com.longlinkislong.gloop;
 
+import com.runouw.util.Lazy;
 import com.longlinkislong.gloop.GLVertexArray.DrawArraysTask;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.cursor.CursorFrame;

@@ -30,6 +30,8 @@ def getProjectVersion(projId) {
 dependencies {        
     compile 'org.slf4j:slf4j-api:1.7.+'
     compile "com.longlinkislong:gloop:${getProjectVersion('gloop')}"
+    compile "com.longlinkislong:gloop-window-glfw:${getProjectVersion('gloop-window-glfw')}"
+    compile "com.runouw:wrappers:${getProjectVersion('wrappers')}"
     testCompile 'junit:junit:4.10'    
 }
 
