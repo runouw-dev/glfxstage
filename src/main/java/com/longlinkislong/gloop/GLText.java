@@ -124,7 +124,7 @@ public class GLText extends GLObject implements CharSequence {
     }
 
     @Override
-    public CharSequence subSequence(final int start, final int end) {        
+    public CharSequence subSequence(final int start, final int end) {
         return new GLText(this.font, this.text.subSequence(start, end));
     }
 
@@ -148,7 +148,7 @@ public class GLText extends GLObject implements CharSequence {
             throw new GLException("Unable to parse default text shader!", ex);
         }
 
-        DEFAULT_TEXT_RENDERER = Optional.of(program);        
+        DEFAULT_TEXT_RENDERER = Optional.of(program);
 
         return program;
     }
@@ -182,13 +182,13 @@ public class GLText extends GLObject implements CharSequence {
     public GLTask newSetTextTask(final CharSequence seq) {
         this.text = seq.toString();
 
-        final GLVec2F offset = GLVec2F.create();
-        final Deque<GLVec4F> colorStack = new LinkedList<>();
-        final List<GLVec2F> pos = new ArrayList<>();
-        final List<GLVec2F> uvs = new ArrayList<>();
-        final List<GLVec4F> col = new ArrayList<>();
+        final GLVec2D offset = GLVec2D.create();
+        final Deque<GLVec4D> colorStack = new LinkedList<>();
+        final List<GLVec2> pos = new ArrayList<>();
+        final List<GLVec2> uvs = new ArrayList<>();
+        final List<GLVec4> col = new ArrayList<>();
         final GLFontMetrics metrics = GLText.this.font.getMetrics();
-        GLVec4F color = GLColors.WHITE.color;
+        GLVec4D color = GLColors.WHITE.getRGBA().asStaticVec();
 
         for (int i = 0; i < text.length(); i++) {
             final String tagStart = text.substring(i);
@@ -284,11 +284,12 @@ public class GLText extends GLObject implements CharSequence {
                                 final int blue = colorVal & 0x0000FF00;
                                 final int alpha = colorVal & 0x000000FF;
 
-                                colorStack.push(GLVec4F.create(
-                                        red / 255f,
-                                        green / 255f,
-                                        blue / 255f,
-                                        alpha / 255f));
+                                colorStack.push(GLVec4D.create(
+                                        red / 255.0,
+                                        green / 255.0,
+                                        blue / 255.0,
+                                        alpha / 255.0)
+                                        .asStaticVec());
                             }
                     }
 
@@ -300,55 +301,55 @@ public class GLText extends GLObject implements CharSequence {
             //</editor-fold>
 
             final char c = text.charAt(i);
-            final float advance = metrics.getCharAdvancement(c);
-            final float lineHeight = metrics.getLineHeight();
+            final double advance = metrics.getCharAdvancement(c);
+            final double lineHeight = metrics.getLineHeight();
 
             if (c == '\t') {
-                offset.set(0, offset.x() + 4f * advance);
+                offset.set(0, offset.x() + 4.0 * advance);
                 continue;
             } else if (c == '\r') {
-                offset.set(0, 0f);
+                offset.set(Vectors.X, 0.0);
                 continue;
             } else if (c == '\n') {
-                offset.set(0, 0);
-                offset.set(1, offset.y() + lineHeight);
+                offset.set(Vectors.X, 0.0);
+                offset.set(Vectors.Y, offset.y() + lineHeight);
                 continue;
             } else if (c == ' ') {
-                offset.set(0, offset.x() + advance);
+                offset.set(Vectors.X, offset.x() + advance);
                 continue;
             } else if (!metrics.isCharSupported(c)) {
                 // skip supported text characters
                 continue;
             }
 
-            final float width = metrics.getCharWidth(c);
-            final float height = metrics.getCharHeight(c);
-            final float offX = metrics.getOffX(c);
-            final float offY = metrics.getOffY(c);
+            final double width = metrics.getCharWidth(c);
+            final double height = metrics.getCharHeight(c);
+            final double offX = metrics.getOffX(c);
+            final double offY = metrics.getOffY(c);
 
-            final float x0 = offset.x() + offX;
-            final float x1 = offset.x() + offX + width;
-            final float y0 = offset.y() + offY;
-            final float y1 = offset.y() + offY + height;
+            final double x0 = offset.x() + offX;
+            final double x1 = offset.x() + offX + width;
+            final double y0 = offset.y() + offY;
+            final double y1 = offset.y() + offY + height;
 
-            final float u0 = metrics.getU0(c);
-            final float u1 = metrics.getU1(c);
-            final float v0 = metrics.getV0(c);
-            final float v1 = metrics.getV1(c);
+            final double u0 = metrics.getU0(c);
+            final double u1 = metrics.getU1(c);
+            final double v0 = metrics.getV0(c);
+            final double v1 = metrics.getV1(c);
 
-            pos.add(GLVec2F.create(x0, y0));
-            pos.add(GLVec2F.create(x0, y1));
-            pos.add(GLVec2F.create(x1, y1));
-            pos.add(GLVec2F.create(x1, y1));
-            pos.add(GLVec2F.create(x1, y0));
-            pos.add(GLVec2F.create(x0, y0));
+            pos.add(GLVec2D.create(x0, y0));
+            pos.add(GLVec2D.create(x0, y1));
+            pos.add(GLVec2D.create(x1, y1));
+            pos.add(GLVec2D.create(x1, y1));
+            pos.add(GLVec2D.create(x1, y0));
+            pos.add(GLVec2D.create(x0, y0));
 
-            uvs.add(GLVec2F.create(u0, v0));
-            uvs.add(GLVec2F.create(u0, v1));
-            uvs.add(GLVec2F.create(u1, v1));
-            uvs.add(GLVec2F.create(u1, v1));
-            uvs.add(GLVec2F.create(u1, v0));
-            uvs.add(GLVec2F.create(u0, v0));
+            uvs.add(GLVec2D.create(u0, v0));
+            uvs.add(GLVec2D.create(u0, v1));
+            uvs.add(GLVec2D.create(u1, v1));
+            uvs.add(GLVec2D.create(u1, v1));
+            uvs.add(GLVec2D.create(u1, v0));
+            uvs.add(GLVec2D.create(u0, v0));
 
             for (int j = 0; j < 6; j++) {
                 col.add(color);
@@ -398,7 +399,7 @@ public class GLText extends GLObject implements CharSequence {
         this.vAttribs = Optional.ofNullable(attribs);
         this.uSampler = Optional.ofNullable(uName.toString());
         this.uProj = Optional.ofNullable(uProj.toString());
-        this.uTrans = Optional.ofNullable(uTrans.toString());                
+        this.uTrans = Optional.ofNullable(uTrans.toString());
     }
 
     /**
@@ -527,7 +528,7 @@ public class GLText extends GLObject implements CharSequence {
                 this.vPos.new DeleteTask(),
                 this.vCol.new DeleteTask(),
                 this.vUVs.new DeleteTask(),
-                GLTask.create(()-> LOGGER.trace("Deleting GLText object!")));
+                GLTask.create(() -> LOGGER.trace("Deleting GLText object!")));
     }
 
     @Override

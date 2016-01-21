@@ -90,12 +90,12 @@ public class GLFontGlpyhSet {
 
         @Override
         public void addRange(char c, char d) {
-            throw new Error("Cannot edit unmodifiable GLFontGlpyhSet!");
+            throw new UnsupportedOperationException("Cannot edit unmodifiable GLFontGlpyhSet!");
         }
 
         @Override
         public void add(char c) {
-            throw new Error("Cannot edit unmodifiable GLFontGlpyhSet!");
+            throw new UnsupportedOperationException("Cannot edit unmodifiable GLFontGlpyhSet!");
         }
     }
 }

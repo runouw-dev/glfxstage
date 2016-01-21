@@ -60,14 +60,12 @@ public class GLFXStage extends GLObject {
     private static final Logger LOGGER = LoggerFactory.getLogger(GLFXStage.class);
 
     static {
-        PlatformImpl.startup(() -> {
-            LOGGER.debug(JAVAFX_MARKER, "JavaFX initialized!");
-        });
+        PlatformImpl.startup(() -> LOGGER.debug(JAVAFX_MARKER, "JavaFX initialized!"));
     }
 
     private int width;
     private int height;
-    private final GLMat4F projection = GLMat4F.ortho(-1f, 1f, -1f, 1f, 0f, 1f).asStaticMat();
+    private final GLMat4D projection = GLMat4D.ortho(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0).asStaticMat();
     private volatile EmbeddedWindow stage;
     private EmbeddedSceneInterface emScene;
     private EmbeddedStageInterface emStage;
@@ -306,9 +304,9 @@ public class GLFXStage extends GLObject {
         super(thread);
 
         if (width < 1) {
-            throw new IllegalArgumentException(String.format("Width [%d] must be at leats 1!", width));
+            throw new IllegalArgumentException("Width [" + width + "] must be at least 1!");            
         } else if (height < 1) {
-            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
+            throw new IllegalArgumentException("Height [" + height + "] must be at leats 1!");
         }
 
         this.resize(width, height);
@@ -322,15 +320,7 @@ public class GLFXStage extends GLObject {
      * @since 15.09.21
      */
     public GLFXStage(final int width, final int height) {
-        super();
-
-        if (width < 1) {
-            throw new IllegalArgumentException(String.format("Width [%d] must be at leats 1!", width));
-        } else if (height < 1) {
-            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
-        }
-
-        this.resize(width, height);
+        this(GLThread.getAny(), width, height);
     }
 
     private void setSceneImpl(final Scene scene) {
@@ -378,6 +368,8 @@ public class GLFXStage extends GLObject {
                     isComplete = true;
                 } catch (InterruptedException ex) {
                     isInterrupted = true;
+                    LOGGER.warn("Thread was interrupted!");
+                    LOGGER.warn(ex.getMessage(), ex);
                 }
             }
 

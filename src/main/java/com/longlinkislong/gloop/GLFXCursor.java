@@ -18,82 +18,22 @@ import static org.lwjgl.glfw.GLFW.GLFW_VRESIZE_CURSOR;
 import static org.lwjgl.glfw.GLFW.glfwCreateStandardCursor;
 
 public enum GLFXCursor {
-    WAIT(()->{
-        return GLQuery.create(()->{
-            
-            return glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        }).glCall();
-    }),
-    DEFAULT(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        }).glCall();
-    }),
-    OPEN_HAND(() -> {
-        return GLQuery.create(() -> {
-            return glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-        }).glCall();
-    }),
-    MOVE(() -> {
-        return GLQuery.create(() -> {
-            return glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-        }).glCall();
-    }),
-    CROSSHAIR(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-        }).glCall();
-    }),
-    DISAPPEAR(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_CURSOR_HIDDEN);
-        }).glCall();
-    }),
-    E_RESIZE(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-        }).glCall();
-    }),
-    W_RESIZE(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-        }).glCall();
-    }),
-    N_RESIZE(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-        }).glCall();
-    }),
-    NE_RESIZE(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-        }).glCall();
-    }),
-    NW_RESIZE(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-        }).glCall();
-    }),
-    S_RESIZE(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-        }).glCall();
-    }),
-    SE_RESIZE(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-        }).glCall();
-    }),
-    SW_RESIZE(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-        }).glCall();
-    }),
-    TEXT(()->{
-        return GLQuery.create(()->{
-            return glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
-        }).glCall();
-    });
+    WAIT(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_ARROW_CURSOR)).glCall()),
+    DEFAULT(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_ARROW_CURSOR)).glCall()),
+    OPEN_HAND(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_HAND_CURSOR)).glCall()),
+    MOVE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_HAND_CURSOR)).glCall()),
+    CROSSHAIR(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR)).glCall()),
+    DISAPPEAR(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_CURSOR_HIDDEN)).glCall()),
+    E_RESIZE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)).glCall()),
+    W_RESIZE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)).glCall()),
+    N_RESIZE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)).glCall()),
+    NE_RESIZE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)).glCall()),
+    NW_RESIZE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)).glCall()),
+    S_RESIZE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)).glCall()),
+    SE_RESIZE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)).glCall()),
+    SW_RESIZE(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)).glCall()),
+    TEXT(() -> GLQuery.create(() -> glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)).glCall());
+    
     final Lazy<Long> glfwHandle;
 
     GLFXCursor(LongSupplier initializer) {

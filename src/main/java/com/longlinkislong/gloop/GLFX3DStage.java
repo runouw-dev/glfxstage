@@ -59,17 +59,14 @@ public class GLFX3DStage extends GLObject {
      * color transforms)
      *
      */
-
     static {
-        PlatformImpl.startup(() -> {
-            LOGGER.debug(JAVAFX_MARKER, "JavaFX initialized!");
-        });
+        PlatformImpl.startup(() -> LOGGER.debug(JAVAFX_MARKER, "JavaFX initialized!"));
     }
 
-    private GLMat4F matrix = GLMat4F.create().asStaticMat();
+    private GLMat4D matrix = GLMat4D.create().asStaticMat();
 
-    public void setMatrix(GLMat4F matrix) {
-        this.matrix.set(matrix);
+    public void setMatrix(GLMat4 matrix) {
+        this.matrix.set(matrix.asGLMat4D());
     }
 
     private class MousePos {
@@ -88,8 +85,8 @@ public class GLFX3DStage extends GLObject {
             x /= Math.max(windowWidth, 1);
             y /= Math.max(windowHeight, 1);
 
-            final GLVec4F vec = GLVec4F.create((float) x, (float) y, 0, 1);
-            final GLVec4F after = matrix.inverse().multiply(vec);
+            final GLVec4D vec = GLVec4D.create(x, y, 0.0, 1.0);
+            final GLVec4D after = matrix.inverse().multiply(vec);
 
             x = after.x() * width;
             y = after.y() * height;
@@ -102,7 +99,7 @@ public class GLFX3DStage extends GLObject {
     private int windowHeight;
     private int width;
     private int height;
-    private final GLMat4F projection = GLMat4F.ortho(0, 1f, 1f, 0f, 0f, 1f).asStaticMat();
+    private final GLMat4D projection = GLMat4D.ortho(0.0, 1.0, 1.0, 0.0, 0.0, 1.0).asStaticMat();
     private boolean focus = false;
     private boolean useTransformMouse = true;
     private boolean applyCursors = true;
@@ -119,8 +116,8 @@ public class GLFX3DStage extends GLObject {
         }
 
         this.focus = focus;
-        
-        if(focus == false){
+
+        if (focus == false) {
             // release modifiers
             this.shift = false;
             this.alt = false;
@@ -129,13 +126,11 @@ public class GLFX3DStage extends GLObject {
 
             // I don't know if this line does anything
             //emStage.focusUngrab();
-            if(GLFX3DStage.this.emStage != null){
+            if (GLFX3DStage.this.emStage != null) {
                 GLFX3DStage.this.emStage.setFocused(false, AbstractEvents.FOCUSEVENT_DEACTIVATED);
             }
-        }else{
-            if(GLFX3DStage.this.emStage != null){
-                GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
-            }
+        } else if (GLFX3DStage.this.emStage != null) {
+            GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
         }
     }
 
@@ -158,13 +153,14 @@ public class GLFX3DStage extends GLObject {
 
         verts.setName("GLFX3DStage.verts");
         verts.upload(GLTools.wrapFloat(
-                0,  0f,
-                0,  1f,
+                0, 0f,
+                0, 1f,
                 1f, 0f,
                 1f, 1f));
 
         return verts;
     });
+
     private final Lazy<GLBuffer> vUVs = new Lazy<>(() -> {
         final GLBuffer texCoord = new GLBuffer();
 
@@ -377,9 +373,9 @@ public class GLFX3DStage extends GLObject {
         super(thread);
 
         if (width < 1) {
-            throw new IllegalArgumentException(String.format("Width [%d] must be at least 1!", width));
+            throw new IllegalArgumentException("Width [" + width + "] must be at least 1!");
         } else if (height < 1) {
-            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
+            throw new IllegalArgumentException("Height [" + height + "] must be at least 1!");            
         }
 
         this.resize(width, height);
@@ -397,22 +393,23 @@ public class GLFX3DStage extends GLObject {
         this(GLThread.getDefaultInstance(), width, height);
 
         if (width < 1) {
-            throw new IllegalArgumentException(String.format("Width [%d] must be at leats 1!", width));
+            throw new IllegalArgumentException("Width [" + width + "] must be at least 1!");            
         } else if (height < 1) {
-            throw new IllegalArgumentException(String.format("Height [%d] must be at least 1!", height));
+            throw new IllegalArgumentException("Height [" + height + "] must be at least 1!");            
         }
 
         this.resize(width, height);
     }
-    
+
     private int oldEMX = 0;
     private int oldEMY = 0;
-    
-    public void setEMLocation(int x, int y){
-         // caling the same position actually breaks menu components, so this avoids it
-        if(oldEMX == x && oldEMY == y){
+
+    public void setEMLocation(int x, int y) {
+        // caling the same position actually breaks menu components, so this avoids it
+        if (oldEMX == x && oldEMY == y) {
             return;
         }
+        
         this.emStage.setLocation(x, y);
         oldEMX = x;
         oldEMY = y;
@@ -463,6 +460,8 @@ public class GLFX3DStage extends GLObject {
                     isComplete = true;
                 } catch (InterruptedException ex) {
                     isInterrupted = true;
+                    LOGGER.warn("Thread was interrupted!");
+                    LOGGER.warn(ex.getMessage(), ex);
                 }
             }
 
@@ -513,7 +512,7 @@ public class GLFX3DStage extends GLObject {
 
             this.needsRecreate = true;
         } else {
-            LOGGER.debug("Resize rejected; width or height is less than 1.");            
+            LOGGER.debug("Resize rejected; width or height is less than 1.");
         }
     }
 
@@ -543,7 +542,7 @@ public class GLFX3DStage extends GLObject {
                 this.tBuffer.rewind();
                 this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
             } else {
-                LOGGER.trace("Request to read 0 bytes ignored.");                
+                LOGGER.trace("Request to read 0 bytes ignored.");
             }
         }
     }
@@ -557,7 +556,7 @@ public class GLFX3DStage extends GLObject {
         newDrawTask().glRun(this.getThread());
     }
 
-    private void updateCursor(GLFXCursor cursor) {
+    private void updateCursor(final GLFXCursor cursor) {
 
         if (this.window == null || this.window.get() == null) {
             cursor.apply(GLWindow.listActiveWindows().get(0));
@@ -589,7 +588,7 @@ public class GLFX3DStage extends GLObject {
 
                     this.needsRecreate = false;
                 } else {
-                    LOGGER.debug("Ignored invalid request to resize texture to [width={}, height={}]", this.width, this.height);                    
+                    LOGGER.debug("Ignored invalid request to resize texture to [width={}, height={}]", this.width, this.height);
                 }
             }
 
@@ -856,7 +855,7 @@ public class GLFX3DStage extends GLObject {
         int buttonId = 0;
 
         if (action == GLMouseButtonAction.PRESSED) {
-            
+
             switch (button) {
                 case 0:
                     buttonId = AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON;
@@ -877,7 +876,7 @@ public class GLFX3DStage extends GLObject {
                     leftButton, middleButton, rightButton,
                     mouseX, mouseY, mouseX, mouseY,
                     shift, ctrl, alt, meta, 0, false);
-            
+
         } else if (action == GLMouseButtonAction.RELEASED) {
             switch (button) {
                 case 0:
@@ -913,7 +912,6 @@ public class GLFX3DStage extends GLObject {
         GLFX3DStage.this.mouseY = (int) mouse.y;
         GLFX3DStage.this.mouseAbsX = GLFX3DStage.this.mouseX + oldEMX;
         GLFX3DStage.this.mouseAbsY = GLFX3DStage.this.mouseY + oldEMY;
-        
 
         if (GLFX3DStage.this.leftButton) {
             GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,

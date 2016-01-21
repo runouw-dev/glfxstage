@@ -7,12 +7,13 @@ package com.longlinkislong.gloop;
 
 /**
  * An interface that represents the measurements of a GLFont object.
+ *
  * @author zmichaels
  * @since 15.06.18
  */
 public interface GLFontMetrics {
-    
-    public boolean isCharSupported(char c);
+
+    boolean isCharSupported(char c);
 
     /**
      * Retrieves the height of a character in pixels.
@@ -20,8 +21,8 @@ public interface GLFontMetrics {
      * @return the height in pixels
      * @since 15.07.01
      */
-    public float getLineHeight();
-    
+    float getLineHeight();
+
     /**
      * Retrieves the x offset of a character in pixels.
      *
@@ -29,8 +30,8 @@ public interface GLFontMetrics {
      * @return the x offset in pixels
      * @since 15.07.01
      */
-    public float getOffX(char c);
-    
+    float getOffX(char c);
+
     /**
      * Retrieves the y offset of a character in pixels.
      *
@@ -38,8 +39,8 @@ public interface GLFontMetrics {
      * @return the y offset in pixels
      * @since 15.07.01
      */
-    public float getOffY(char c);
-    
+    float getOffY(char c);
+
     /**
      * Retrieves the x advance of a character in pixels.
      *
@@ -47,8 +48,8 @@ public interface GLFontMetrics {
      * @return the y offset in pixels
      * @since 15.07.01
      */
-    public float getCharAdvancement(char c);
-    
+    float getCharAdvancement(char c);
+
     /**
      * Retrieves the width of a character in pixels.
      *
@@ -56,24 +57,25 @@ public interface GLFontMetrics {
      * @return the width in pixels
      * @since 15.07.01
      */
-    public float getCharWidth(char c);
-    
+    float getCharWidth(char c);
+
     /**
      * Retrieves an estimation on the length of a string in pixels.
+     *
      * @param string the string to calculate the length.
      * @return the length of the string in pixels.
      * @since 15.08.24
      */
     default float getStringWidth(final CharSequence string) {
         float width = 0f;
-        
-        for(int i = 0; i < string.length(); i++) {
+
+        for (int i = 0; i < string.length(); i++) {
             width += this.getCharWidth(string.charAt(i));
         }
-        
+
         return width;
     }
-    
+
     /**
      * Retrieves the width of a character in pixels.
      *
@@ -81,11 +83,13 @@ public interface GLFontMetrics {
      * @return the height in pixels
      * @since 15.07.01
      */
-    public float getCharHeight(char c);
+    float getCharHeight(char c);
 
-    
-    public float getU0(char c);
-    public float getU1(char c);
-    public float getV0(char c);
-    public float getV1(char c);
+    float getU0(char c);
+
+    float getU1(char c);
+
+    float getV0(char c);
+
+    float getV1(char c);
 }
