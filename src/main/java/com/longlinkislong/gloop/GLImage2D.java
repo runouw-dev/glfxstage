@@ -460,7 +460,7 @@ public class GLImage2D implements Closeable {
             for(int x=0;x<getWidth();x++){
                 int mx = getWidth() - x - 1;
                 
-                dest.put(src.get(y*getWidth() + getHeight() + mx));
+                dest.put(src.get(y*getWidth() + mx));
             }
         }
         
@@ -489,7 +489,7 @@ public class GLImage2D implements Closeable {
                 int my = getHeight() - y - 1;
                 
                 // TODO: this could be sped up by copying the whole stride at a time
-                src.put(dest.get(my*getWidth() + getHeight() + x));
+                src.put(dest.get(my*getWidth() + x));
             }
         }
         
