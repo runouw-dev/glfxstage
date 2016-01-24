@@ -453,11 +453,14 @@ public class GLImage2D implements Closeable {
         img.data.mark();
         this.data.mark();
         
+        final IntBuffer src = this.data.asIntBuffer();
+        final IntBuffer dest = img.data.asIntBuffer();
+        
         for(int y=0;y<getHeight();y++){
             for(int x=0;x<getWidth();x++){
                 int mx = getWidth() - x - 1;
                 
-                img.data.put(data.get(y*getWidth() + getHeight() + mx));
+                dest.put(src.get(y*getWidth() + getHeight() + mx));
             }
         }
         
@@ -478,11 +481,15 @@ public class GLImage2D implements Closeable {
         img.data.mark();
         this.data.mark();
         
+        final IntBuffer src = this.data.asIntBuffer();
+        final IntBuffer dest = img.data.asIntBuffer();
+        
         for(int y=0;y<getHeight();y++){
             for(int x=0;x<getWidth();x++){
                 int my = getHeight() - y - 1;
                 
-                img.data.put(data.get(my*getWidth() + getHeight() + x));
+                // TODO: this could be sped up by copying the whole stride at a time
+                src.put(dest.get(my*getWidth() + getHeight() + x));
             }
         }
         
