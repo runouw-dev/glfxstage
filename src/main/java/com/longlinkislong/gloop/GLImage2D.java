@@ -154,7 +154,7 @@ public class GLImage2D implements Closeable {
             for(int px=0;px<w;px++){
                 int pxSrc = px + x;
                 
-                data[py*w + px] = src.get(pySrc*w + pxSrc);
+                data[py*h + px] = src.get(pySrc*h + pxSrc);
             }
         }
         
@@ -189,7 +189,7 @@ public class GLImage2D implements Closeable {
             for(int px=0;px<w;px++){
                 int pxSrc = px + x;
                 
-                data[py*w + px] = src.get(pySrc*w + pxSrc);
+                data[py*h + px] = src.get(pySrc*h + pxSrc);
             }
         }
         
@@ -453,7 +453,7 @@ public class GLImage2D implements Closeable {
             for(int x=0;x<getWidth();x++){
                 int mx = getWidth() - x - 1;
                 
-                dest.put(src.get(y*getWidth() + mx));
+                dest.put(src.get(y*getHeight()+ mx));
             }
         }
         
@@ -479,7 +479,7 @@ public class GLImage2D implements Closeable {
             for(int x=0;x<getWidth();x++){
                 int my = getHeight() - y - 1;
                 
-                dest.put(src.get(my*getWidth() + x));
+                dest.put(src.get(my*getHeight()+ x));
             }
         }
         
