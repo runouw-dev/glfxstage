@@ -146,23 +146,18 @@ public class GLImage2D implements Closeable {
             final int w, final int h,
             final int[] data) {
 
-        this.data.mark();
-        
         final int[] out = data == null ? new int[w * h] : data;
         final IntBuffer src = this.data.asIntBuffer();
-        final int scanlineStride = this.getWidth();
-        int yOff = indexOf(x, y);
-        int off = 0;
-
-        for (int yStart = 0; yStart < h; yStart++) {
-            src.position(yOff);
-            src.get(out, off, w);
-            off += w;
-            yOff += scanlineStride;
+        
+        for(int py=0;py<w;py++){
+            int pySrc = py + y;
+            for(int px=0;px<w;px++){
+                int pxSrc = px + x;
+                
+                data[py*w + px] = src.get(pySrc*w + pxSrc);
+            }
         }
         
-        this.data.reset();
-
         return out;
     }
 
@@ -188,15 +183,14 @@ public class GLImage2D implements Closeable {
 
         final float[] out = data == null ? new float[w * h] : data;
         final FloatBuffer src = this.data.asFloatBuffer();
-        final int scanlineStride = this.getWidth();
-        int yOff = indexOf(x, y);
-        int off = 0;
-
-        for (int yStart = 0; yStart < h; yStart++) {
-            src.position(yOff);
-            src.get(out, off, w);
-            off += w;
-            yOff += scanlineStride;
+        
+        for(int py=0;py<w;py++){
+            int pySrc = py + y;
+            for(int px=0;px<w;px++){
+                int pxSrc = px + x;
+                
+                data[py*w + px] = src.get(pySrc*w + pxSrc);
+            }
         }
         
         this.data.reset();
@@ -450,7 +444,6 @@ public class GLImage2D implements Closeable {
     public GLImage2D asMirrorX(){
         final GLImage2D img = new GLImage2D(getWidth(), getHeight());        
         
-        img.data.mark();
         this.data.mark();
         
         final IntBuffer src = this.data.asIntBuffer();
@@ -465,7 +458,6 @@ public class GLImage2D implements Closeable {
         }
         
         img.data.reset();
-        this.data.reset();
         
         return img;
     }
@@ -478,7 +470,6 @@ public class GLImage2D implements Closeable {
     public GLImage2D asMirrorY(){
         final GLImage2D img = new GLImage2D(getWidth(), getHeight());        
         
-        img.data.mark();
         this.data.mark();
         
         final IntBuffer src = this.data.asIntBuffer();
@@ -488,13 +479,11 @@ public class GLImage2D implements Closeable {
             for(int x=0;x<getWidth();x++){
                 int my = getHeight() - y - 1;
                 
-                // TODO: this could be sped up by copying the whole stride at a time
-                src.put(dest.get(my*getWidth() + x));
+                dest.put(src.get(my*getWidth() + x));
             }
         }
         
         img.data.reset();
-        this.data.reset();
         
         return img;
     }
