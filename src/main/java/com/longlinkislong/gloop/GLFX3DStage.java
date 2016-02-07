@@ -29,6 +29,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_END;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_HOME;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_INSERT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT;
@@ -782,6 +783,9 @@ public class GLFX3DStage extends GLObject {
         }
 
         switch (key) {
+            case GLFW_KEY_ENTER:
+                keyId = com.sun.glass.events.KeyEvent.VK_ENTER;
+                break;
             case GLFW_KEY_BACKSPACE:
                 keyId = com.sun.glass.events.KeyEvent.VK_BACKSPACE;
                 break;
