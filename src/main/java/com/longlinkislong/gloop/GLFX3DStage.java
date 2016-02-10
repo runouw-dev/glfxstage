@@ -951,5 +951,13 @@ public class GLFX3DStage extends GLObject {
 
         GLFX3DStage.this.scroll(x, y);
     }
+    
+    public void clean() {
+        this.texture.delete();
+        this.vao.ifInitialized(GLVertexArray::delete);
+        this.vPos.ifInitialized(GLBuffer::delete);
+        this.vUVs.ifInitialized(GLBuffer::delete);
+        
+    }
 
 }

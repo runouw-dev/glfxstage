@@ -53,9 +53,12 @@ import org.slf4j.MarkerFactory;
  *
  * @author zmichaels
  * @since 15.09.21
+ * @deprecated superceded by GLFX3DStage
  */
+@Deprecated
 public class GLFXStage extends GLObject {
 
+    private static final Marker GLOOP_MARKER = MarkerFactory.getMarker("GLOOP");
     private static final Marker JAVAFX_MARKER = MarkerFactory.getMarker("JAVAFX");
     private static final Logger LOGGER = LoggerFactory.getLogger(GLFXStage.class);
 
@@ -388,7 +391,7 @@ public class GLFXStage extends GLObject {
      * @since 15.09.21
      */
     public final void resize(final int newWidth, final int newHeight) {
-        LOGGER.trace("Requested resize: [width={}, height={}]", newWidth, newHeight);
+        LOGGER.trace(GLOOP_MARKER, "Requested resize: [width={}, height={}]", newWidth, newHeight);
         
         if (newWidth > 0 && newHeight > 0) {
             this.width = newWidth;
@@ -402,7 +405,7 @@ public class GLFXStage extends GLObject {
                 this.emStage.setSize(width, height);
             }
         } else {
-            LOGGER.debug("Resize rejected; width or height is less than 1.");            
+            LOGGER.debug(GLOOP_MARKER, "Resize rejected; width or height is less than 1.");            
         }
 
         this.needsRecreate = true;
@@ -442,7 +445,7 @@ public class GLFXStage extends GLObject {
                 this.tBuffer.rewind();
                 this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
             } else {
-                LOGGER.debug("Request to read 0 bytes ignored.");                
+                LOGGER.debug(GLOOP_MARKER, "Request to read 0 bytes ignored.");                
             }
         }
     }
@@ -457,7 +460,7 @@ public class GLFXStage extends GLObject {
     }
 
     private void updateCursor(final GLFXCursor cursor) {
-        LOGGER.debug("Cursor set to {}", cursor);
+        LOGGER.debug(GLOOP_MARKER, "Cursor set to {}", cursor);
         
         if (this.window == null || this.window.get() == null) {
             cursor.apply(GLWindow.listActiveWindows().get(0));
@@ -486,7 +489,7 @@ public class GLFXStage extends GLObject {
 
                     this.needsRecreate = false;
                 } else {
-                    LOGGER.debug("Ignord invalid request to resize texture to [width={}, height={}]", this.width, this.height);                    
+                    LOGGER.debug(GLOOP_MARKER, "Ignord invalid request to resize texture to [width={}, height={}]", this.width, this.height);                    
                 }
             }
 
@@ -507,9 +510,7 @@ public class GLFXStage extends GLObject {
         return GLTask.join(
                 PROGRAM.get().new UseTask(),
                 PROGRAM.get().new SetUniformITask("fxTexture", 0),
-                GLTask.create(() -> {
-                    PROGRAM.get().setUniformMatrixF("vProj", this.projection);
-                }),
+                GLTask.create(() -> PROGRAM.get().setUniformMatrixF("vProj", this.projection)),
                 bindTex,
                 vao.get().new DrawArraysTask(GLDrawMode.GL_TRIANGLE_STRIP, 0, 4));
     }

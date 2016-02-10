@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 /**
  * An application that uses a GLWindow object.
@@ -24,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * @since 15.10.29
  */
 public abstract class GLApplication {
-
+    private static final Marker MARKER = MarkerFactory.getMarker("GLOOP");
     private static final Logger LOGGER = LoggerFactory.getLogger(GLApplication.class);
     private GLWindow window;
     private Parameters parameters = new Parameters(null);
@@ -49,7 +51,7 @@ public abstract class GLApplication {
 
     void setParameters(final Parameters params) {
         this.parameters = params;
-        LOGGER.trace("Set GLApplication parameters to: {}", params);
+        LOGGER.trace(MARKER, "Set GLApplication parameters to: {}", params);
     }
 
     /**
@@ -80,7 +82,7 @@ public abstract class GLApplication {
      * @since 15.11.11
      */
     public final void enableOffHeapVectors(int offHeapSize) {
-        if (this.gloopInit.get()) {
+        if (this.gloopInit.get()) {            
             throw new IllegalStateException("Off-heap vectors can only be enabled before Gloop is initialized!");
         }
 
@@ -104,9 +106,10 @@ public abstract class GLApplication {
         try {
             Class.forName("org.slf4j.impl.SimpleLogger");
             System.setProperty("org.slf4j.simpleLogger.log.com.longlinkislong.gloop", "debug");
-            LOGGER.info("Set logging level for package: com.longlinkislong.gloop to debug.");
+            LOGGER.info(MARKER, "Set logging level for package: com.longlinkislong.gloop to debug.");
         } catch (ClassNotFoundException ex) {
-            LOGGER.warn("Could not find SLF4J on classpath! GLApplication.enableDebug() only works with SLF4J-Simple.");
+            LOGGER.warn(MARKER, "Could not find SLF4J on classpath! GLApplication.enableDebug() only works with SLF4J-Simple.");
+            LOGGER.trace(MARKER, ex.getMessage(), ex);
         }
 
     }
@@ -128,7 +131,8 @@ public abstract class GLApplication {
             Class.forName("org.slf4j.impl.SimpleLogger");
             System.setProperty("org.slf4j.simpleLogger.log.com.longlinkislong.gloop", "trace");
         } catch (ClassNotFoundException ex) {
-            LOGGER.warn("Could not find SLF4J on classpath! GLApplication.enableTrace() only works with SLF4J-Simple");
+            LOGGER.warn(MARKER, "Could not find SLF4J on classpath! GLApplication.enableTrace() only works with SLF4J-Simple");
+            LOGGER.trace(MARKER, ex.getMessage(), ex);
         }
     }
 
@@ -146,7 +150,7 @@ public abstract class GLApplication {
         }
 
         this.initialWindowTitle = title.toString();
-        LOGGER.trace("Set GLApplication.window.title = {}", title);
+        LOGGER.trace(MARKER, "Set GLApplication.window.title = {}", title);
     }
 
     /**
@@ -158,14 +162,20 @@ public abstract class GLApplication {
      * @throws IllegalStateException if called after GLWindow is created.
      * @since 15.10.29
      */
-    public final void setInitialWindowSize(final int width, final int height) {
-        if (this.gloopInit.get()) {
+    public final void setInitialWindowSize(final int width, final int height) {        
+        if (this.gloopInit.get()) {            
             throw new IllegalStateException("The initial window size can only be set before gloop is initialized!");
-        }
+        }                
 
-        this.initialWindowWidth = width;
-        this.initialWindowHeight = height;
-        LOGGER.trace("Set GLApplication window initial size to [width={}, height={}]", width, height);
+        if((this.initialWindowWidth = width) < 0) {
+            LOGGER.error(MARKER, "Received initial width value: {}!", width);
+            throw new IllegalArgumentException("Initial width cannot be less than 0!");
+        } else if((this.initialWindowHeight = height) < 0) {
+            LOGGER.error(MARKER, "Received initial height value: {}!", height);
+            throw new IllegalArgumentException("Initial height cannot be less than 0!");
+        }
+        
+        LOGGER.trace(MARKER, "Set GLApplication window initial size to [width={}, height={}]", width, height);
     }
 
     /**
@@ -181,7 +191,7 @@ public abstract class GLApplication {
         }
 
         GLApplication.class.getClassLoader().setPackageAssertionStatus("com.longlinkislong.gloop", true);
-        LOGGER.trace("Enabled assertions on package: com.longlinkislong.gloop!");
+        LOGGER.trace(MARKER, "Enabled assertions on package: com.longlinkislong.gloop!");
     }
 
     /**
@@ -193,13 +203,13 @@ public abstract class GLApplication {
      * @throws IllegalStateException if called after GLWindow is created.
      * @since 15.10.29
      */
-    public final void setProperty(final String property, final Object value) {
+    public final void setProperty(final CharSequence property, final Object value) {
         if (this.gloopInit.get()) {
             throw new IllegalStateException("Gloop properties can only be enabled before Gloop is initialized!");
         }
 
-        System.setProperty(property, value.toString());
-        LOGGER.trace("Set system property [{}] = [{}]", property, value);
+        System.setProperty(property.toString(), value.toString());
+        LOGGER.trace(MARKER, "Set system property [{}] = [{}]", property, value);
     }
 
     /**
@@ -247,14 +257,14 @@ public abstract class GLApplication {
     @SuppressWarnings("unchecked")
     public static void launch(String... args) {
         // based on javafx.application.Application.launch
-        StackTraceElement[] cause = Thread.currentThread().getStackTrace();
+        final StackTraceElement[] cause = Thread.currentThread().getStackTrace();
 
         boolean foundThisMethod = false;
         String callingNameClass = null;
 
         for (StackTraceElement se : cause) {
-            String className = se.getClassName();
-            String methodName = se.getMethodName();
+            final String className = se.getClassName();
+            final String methodName = se.getMethodName();
 
             if (foundThisMethod) {
                 callingNameClass = className;
@@ -275,7 +285,7 @@ public abstract class GLApplication {
             if (GLApplication.class.isAssignableFrom(theClass)) {
                 final Class<? extends GLApplication> appClass = (Class<? extends GLApplication>) theClass;
 
-                LOGGER.trace("Launching application: [{}]!", appClass.getSimpleName());
+                LOGGER.trace(MARKER, "Launching application: [{}]!", appClass.getSimpleName());
                 GLApplicationLauncher.getInstance().launchApplication(appClass, args);
             } else {
                 throw new RuntimeException(String.format("Error: %s is not a subclass of com.longlinkislong.gloop.GLApplication", theClass));

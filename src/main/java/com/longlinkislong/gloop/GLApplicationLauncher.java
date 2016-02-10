@@ -11,13 +11,18 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 /**
  *
  * @author zmichaels
  */
 class GLApplicationLauncher {
+
+    private static final Marker MARKER = MarkerFactory.getMarker("GLOOP");
     private static final Logger LOGGER = LoggerFactory.getLogger(GLApplicationLauncher.class);
+
     private static class Holder {
 
         private static final GLApplicationLauncher INSTANCE = new GLApplicationLauncher();
@@ -70,24 +75,24 @@ class GLApplicationLauncher {
             throw launchException;
         }
     }
-    
+
     private volatile Throwable stopException = null;
 
-    void doLaunchApplication(final Class<? extends GLApplication> appClass, final String[] args) {        
+    void doLaunchApplication(final Class<? extends GLApplication> appClass, final String[] args) {                        
         GLApplication app = null;
         try {
             final Constructor<? extends GLApplication> c = appClass.getConstructor();
-            
-            app = c.newInstance();            
+
+            app = c.newInstance();
             app.setParameters(new GLApplication.Parameters(args));
-            LOGGER.trace("Constructed {}", app.getClass().getName());
+            LOGGER.trace(MARKER, "Constructed {}", app.getClass().getName());
         } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException t) {
             throw new RuntimeException("Unable to construct GLApplication", t);
-        }        
+        }
 
         try {
             app.init();
-            LOGGER.trace("Initialized {}", app.getClass().getName());
+            LOGGER.trace(MARKER, "Initialized {}", app.getClass().getName());
         } catch (Throwable t) {
             throw new RuntimeException("Unable to initialize GLApplication", t);
         }
@@ -96,7 +101,7 @@ class GLApplicationLauncher {
 
         try {
             app.gloopInit.set(true);
-            
+
             final GLWindow window = new GLWindow(app.initialWindowWidth, app.initialWindowHeight, app.initialWindowTitle);
             final GLApplication theApp = app;
 
@@ -104,18 +109,18 @@ class GLApplicationLauncher {
                 try {
                     theApp.stop();
                     theApp.setWindow(null);
-                    LOGGER.trace("Stopped {}", theApp.getClass().getName());
-                } catch (Throwable t) {                    
-                    stopException = t;                    
+                    LOGGER.trace(MARKER, "Stopped {}", theApp.getClass().getName());
+                } catch (Throwable t) {
+                    stopException = t;
                 } finally {
                     shutdownLatch.countDown();
                 }
             });
 
             app.setWindow(window);
-            LOGGER.trace("Starting {}", app.getClass().getName());
-            app.start(window);            
-            
+            LOGGER.trace(MARKER, "Starting {}", app.getClass().getName());
+            app.start(window);
+
             window.getGLThread().scheduleGLTask(GLTask.create(app::draw));
             window.getGLThread().scheduleGLTask(window.new UpdateTask());
         } catch (Throwable t) {
@@ -127,8 +132,8 @@ class GLApplicationLauncher {
         } catch (InterruptedException ex) {
             throw new RuntimeException("GLApplication launch thread interrupted!", ex);
         }
-        
-        if(stopException != null) {
+
+        if (stopException != null) {
             throw new RuntimeException("Unable to stop GLApplication", stopException);
         }
     }
