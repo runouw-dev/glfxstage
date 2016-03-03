@@ -279,9 +279,9 @@ public class GLText extends GLObject implements CharSequence {
                             if (tag.toLowerCase().startsWith("color")) {
                                 final String colorCode = tag.split("=")[1];
                                 final int colorVal = Integer.decode(colorCode);
-                                final int red = colorVal & 0xFF000000;
-                                final int green = colorVal & 0x00FF0000;
-                                final int blue = colorVal & 0x0000FF00;
+                                final int red = (colorVal & 0xFF000000) >> 24;
+                                final int green = (colorVal & 0x00FF0000) >> 16;
+                                final int blue = (colorVal & 0x0000FF00) >> 8;
                                 final int alpha = colorVal & 0x000000FF;
 
                                 colorStack.push(GLVec4D.create(
