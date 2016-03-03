@@ -490,14 +490,19 @@ public class GLText extends GLObject implements CharSequence {
         final String uTr = this.uTrans.orElse(GLText.DEFAULT_TRANSLATION_UNAME);
         final int verts = (int) (this.length * 6 * percent);
 
-        return GLTask.join(
-                this.font.newBindTask(target),
-                prog.new SetUniformMatrixFTask(uPr, pr.asGLMat4F()),
-                prog.new SetUniformMatrixFTask(uTr, tr.asGLMat4F()),
-                prog.new SetUniformITask(uFont, target),
-                prog.new UseTask(),
-                this.vao.new DrawArraysTask(GLDrawMode.GL_TRIANGLES, 0, verts)
-        );
+        if(verts == 0){
+            // NO-OP
+            return GLTask.create(() -> {});
+        }else{
+            return GLTask.join(
+                    this.font.newBindTask(target),
+                    prog.new SetUniformMatrixFTask(uPr, pr.asGLMat4F()),
+                    prog.new SetUniformMatrixFTask(uTr, tr.asGLMat4F()),
+                    prog.new SetUniformITask(uFont, target),
+                    prog.new UseTask(),
+                    this.vao.new DrawArraysTask(GLDrawMode.GL_TRIANGLES, 0, verts)
+            );
+        }
     }
 
     /**
