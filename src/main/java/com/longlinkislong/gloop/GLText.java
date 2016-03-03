@@ -278,19 +278,56 @@ public class GLText extends GLObject implements CharSequence {
                         default:
                             if (tag.toLowerCase().startsWith("color")) {
                                 final String colorCode = tag.split("=")[1];
-                                final int colorVal = Integer.decode(colorCode);
-                                final int red = (colorVal & 0xFF000000) >> 24;
-                                final int green = (colorVal & 0x00FF0000) >> 16;
-                                final int blue = (colorVal & 0x0000FF00) >> 8;
-                                final int alpha = colorVal & 0x000000FF;
+                                
+                                try{
+                                    if (colorCode.startsWith("#") && colorCode.length() == 4) {
+                                        // shorthand notation
+                                        final int colorVal = Integer.decode(colorCode);
 
-                                colorStack.push(GLVec4D.create(
-                                        red / 255.0,
-                                        green / 255.0,
-                                        blue / 255.0,
-                                        alpha / 255.0)
-                                        .asStaticVec());
+                                        int alpha = (colorVal & 0xF000) >> 12;
+                                        final int red = (colorVal & 0x0F00) >> 8;
+                                        final int green = (colorVal & 0xF0) >> 4;
+                                        final int blue = colorVal & 0x000F;
+
+                                        if (alpha == 0) {
+                                            alpha = 15;
+                                        }
+
+                                        colorStack.push(color);
+                                        color = GLVec4D.create(
+                                                red / 15.0,
+                                                green / 15.0,
+                                                blue / 15.0,
+                                                alpha / 15.0)
+                                                .asStaticVec();
+                                    } else {
+                                        // argb notation
+                                        final int colorVal = Integer.decode(colorCode);
+
+                                        int alpha = colorVal & 0xFF000000 >> 24;
+                                        final int red = (colorVal & 0x00FF0000) >> 16;
+                                        final int green = (colorVal & 0x0000FF00) >> 8;
+                                        final int blue = colorVal & 0x000000FF;
+
+                                        if (alpha == 0) {
+                                            alpha = 255;
+                                        }
+
+                                        colorStack.push(color);
+                                        color = GLVec4D.create(
+                                                red / 255.0,
+                                                green / 255.0,
+                                                blue / 255.0,
+                                                alpha / 255.0)
+                                                .asStaticVec();
+                                    }
+                                }catch(NumberFormatException err){
+                                    // text can be user input, so don't crash, instead print error
+                                    LOGGER.error("Error decoding number in tag " + tag, err);
+                                }
+
                             }
+                        break;
                     }
 
                     i += tagSize;
