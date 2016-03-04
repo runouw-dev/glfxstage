@@ -295,8 +295,6 @@ public class GLText extends GLObject implements CharSequence {
                                 
                                 try{
                                     if (colorCode.startsWith("#") && (colorCode.length() == 4 || colorCode.length() == 5)) {
-                                        System.out.println("");
-                                        
                                         // shorthand notation
                                         final int colorVal = Integer.decode(colorCode);
 
