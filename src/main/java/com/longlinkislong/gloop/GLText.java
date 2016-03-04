@@ -280,7 +280,9 @@ public class GLText extends GLObject implements CharSequence {
                                 final String colorCode = tag.split("=")[1];
                                 
                                 try{
-                                    if (colorCode.startsWith("#") && colorCode.length() == 4) {
+                                    if (colorCode.startsWith("#") && (colorCode.length() == 4 || colorCode.length() == 5)) {
+                                        System.out.println("");
+                                        
                                         // shorthand notation
                                         final int colorVal = Integer.decode(colorCode);
 
