@@ -541,7 +541,7 @@ public class GLText extends GLObject implements CharSequence {
         final String uFont = this.uSampler.orElse(GLText.DEFAULT_SAMPLER_UNAME);
         final String uPr = this.uProj.orElse(GLText.DEFAULT_PROJECTION_UNAME);
         final String uTr = this.uTrans.orElse(GLText.DEFAULT_TRANSLATION_UNAME);
-        final int verts = (int) (this.length * 6 * percent);
+        final int verts = (int) (this.length * percent) * 6;
 
         if(verts == 0){
             // NO-OP
