@@ -38,6 +38,7 @@ public class GLText extends GLObject implements CharSequence {
     }
 
     private String text;
+    private final GLVec4D baseColor = GLColors.WHITE.getRGBA().asStaticVec();
     private Optional<String> uSampler = Optional.empty();
     private Optional<String> uProj = Optional.empty();
     private Optional<String> uTrans = Optional.empty();
@@ -171,6 +172,19 @@ public class GLText extends GLObject implements CharSequence {
     public void setText(final CharSequence seq) {
         this.newSetTextTask(seq).glRun(this.getThread());
     }
+    
+    /**
+     * Overwrites the text that the GLText object is displaying.
+     *
+     * @param baseColor the base color of the text (when there are no color
+     * tags).
+     * @param seq the text to display
+     * @since 15.06.11
+     */
+    public void setText(GLVec4D baseColor, final CharSequence seq) {
+        this.baseColor.set(baseColor);
+        this.newSetTextTask(seq).glRun(this.getThread());
+    }
 
     /**
      * Creates a new GLTask that updates the text object.
@@ -188,7 +202,7 @@ public class GLText extends GLObject implements CharSequence {
         final List<GLVec2> uvs = new ArrayList<>();
         final List<GLVec4> col = new ArrayList<>();
         final GLFontMetrics metrics = GLText.this.font.getMetrics();
-        GLVec4D color = GLColors.WHITE.getRGBA().asStaticVec();
+        GLVec4D color = baseColor;
 
         for (int i = 0; i < text.length(); i++) {
             final String tagStart = text.substring(i);
