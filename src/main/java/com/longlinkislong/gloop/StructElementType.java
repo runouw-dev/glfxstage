@@ -12,12 +12,18 @@ package com.longlinkislong.gloop;
  * @since 16.03.31
  */
 public enum StructElementType {
-    BYTE(Byte.SIZE),
-    SHORT(Short.SIZE),
-    INT(Integer.SIZE),
-    LONG(Long.SIZE),
-    FLOAT(Float.SIZE),
-    DOUBLE(Double.SIZE);
+    BYTE(Byte.BYTES),
+    SHORT(Short.BYTES),
+    INT(Integer.BYTES),
+    LONG(Long.BYTES),
+    FLOAT(Float.BYTES),
+    DOUBLE(Double.BYTES),
+    VEC2F(GLVec2F.VECTOR_WIDTH),
+    VEC3F(GLVec3F.VECTOR_WIDTH),
+    VEC4F(GLVec4F.VECTOR_WIDTH),
+    MAT2F(GLMat2F.MATRIX_WIDTH),
+    MAT3F(GLMat3F.MATRIX_WIDTH),
+    MAT4F(GLMat4F.MATRIX_WIDTH);
 
     public int width;
 
