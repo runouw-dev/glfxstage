@@ -35,11 +35,14 @@ public final class StructMap implements Map<String, Object> {
      * @return the array of StructMaps.
      * @since 16.03.31
      */
-    public static StructMap[] map(final long ptr, final StructDef def, final int count) {
+    public static StructMap[] map(long ptr, final StructDef def, final int count) {
         final StructMap[] out = new StructMap[count];
 
+        ptr += def.offset;
+
         for (int i = 0; i < count; i++) {
-            out[i] = new StructMap(ptr + def.size, def);
+            out[i] = new StructMap(ptr, def);
+            ptr += def.size + def.stride;
         }
 
         return out;
@@ -180,16 +183,16 @@ public final class StructMap implements Map<String, Object> {
                 case VEC2F: {
                     final GLVec2F ov = GLVec2F.create();
                     final int sz = ov.size();
-                    
-                    for(int i = 0; i < sz; i++) {
+
+                    for (int i = 0; i < sz; i++) {
                         ov.data()[ov.offset() + i] = MemoryUtil.memGetFloat(p + Float.BYTES * i);
                     }
-                    
+
                     prevValue = ov;
 
                     final GLVec2F v = ((GLVec2) value).asGLVec2F();
 
-                    for(int i = 0; i < sz; i++) {
+                    for (int i = 0; i < sz; i++) {
                         MemoryUtil.memPutFloat(p + Float.BYTES * i, v.data()[v.offset() + i]);
                     }
                 }
@@ -197,16 +200,16 @@ public final class StructMap implements Map<String, Object> {
                 case VEC3F: {
                     final GLVec3F ov = GLVec3F.create();
                     final int sz = ov.size();
-                    
-                    for(int i = 0; i < sz; i++) {
+
+                    for (int i = 0; i < sz; i++) {
                         ov.data()[ov.offset() + i] = MemoryUtil.memGetFloat(p + Float.BYTES * i);
                     }
-                    
+
                     prevValue = ov;
 
                     final GLVec3F v = ((GLVec3) value).asGLVec3F();
 
-                    for(int i = 0; i < sz; i++) {
+                    for (int i = 0; i < sz; i++) {
                         MemoryUtil.memPutFloat(p + Float.BYTES * i, v.data()[v.offset() + i]);
                     }
                 }
@@ -214,16 +217,16 @@ public final class StructMap implements Map<String, Object> {
                 case VEC4F: {
                     final GLVec4F ov = GLVec4F.create();
                     final int sz = ov.size();
-                    
-                    for(int i = 0; i < sz; i++) {
+
+                    for (int i = 0; i < sz; i++) {
                         ov.data()[ov.offset() + i] = MemoryUtil.memGetFloat(p + Float.BYTES * i);
                     }
-                    
+
                     prevValue = ov;
 
                     final GLVec4F v = ((GLVec4) value).asGLVec4F();
 
-                    for(int i = 0; i < sz; i++) {
+                    for (int i = 0; i < sz; i++) {
                         MemoryUtil.memPutFloat(p + Float.BYTES * i, v.data()[v.offset() + i]);
                     }
                 }
@@ -354,33 +357,33 @@ public final class StructMap implements Map<String, Object> {
                 case MAT2F: {
                     final GLMat2F m = GLMat2F.create();
                     final int sz = m.size() * m.size();
-                    
-                    for(int i = 0; i < sz; i++) {
+
+                    for (int i = 0; i < sz; i++) {
                         m.data()[m.offset() + i] = MemoryUtil.memGetFloat(p + Float.BYTES * i);
                     }
-                                        
+
                     value = m;
                 }
                 break;
                 case MAT3F: {
                     final GLMat3F m = GLMat3F.create();
                     final int sz = m.size() * m.size();
-                    
-                    for(int i = 0; i < sz; i++) {
+
+                    for (int i = 0; i < sz; i++) {
                         m.data()[m.offset() + i] = MemoryUtil.memGetFloat(p + Float.BYTES * i);
                     }
-                                        
+
                     value = m;
                 }
                 break;
                 case MAT4F: {
                     final GLMat4F m = GLMat4F.create();
                     final int sz = m.size() * m.size();
-                    
-                    for(int i = 0; i < sz; i++) {
+
+                    for (int i = 0; i < sz; i++) {
                         m.data()[m.offset() + i] = MemoryUtil.memGetFloat(p + Float.BYTES * i);
                     }
-                                        
+
                     value = m;
                 }
                 break;
