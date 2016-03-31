@@ -38,6 +38,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
+import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -536,7 +537,7 @@ public class GLFX3DStage extends GLObject {
             final int neededSize = this.width * this.height * Integer.BYTES;
 
             if (neededSize > 0) {
-                if (this.tBuffer == null || neededSize > this.tBuffer.capacity()) {
+                if (this.tBuffer == null || neededSize > this.tBuffer.capacity()) {                    
                     this.tBuffer = ByteBuffer.allocateDirect(neededSize).order(ByteOrder.nativeOrder());
                 }
 
