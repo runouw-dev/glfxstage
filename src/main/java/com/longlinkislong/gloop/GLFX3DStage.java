@@ -377,7 +377,7 @@ public class GLFX3DStage extends GLObject {
         if (width < 1) {
             throw new IllegalArgumentException("Width [" + width + "] must be at least 1!");
         } else if (height < 1) {
-            throw new IllegalArgumentException("Height [" + height + "] must be at least 1!");            
+            throw new IllegalArgumentException("Height [" + height + "] must be at least 1!");
         }
 
         this.resize(width, height);
@@ -395,9 +395,9 @@ public class GLFX3DStage extends GLObject {
         this(GLThread.getDefaultInstance(), width, height);
 
         if (width < 1) {
-            throw new IllegalArgumentException("Width [" + width + "] must be at least 1!");            
+            throw new IllegalArgumentException("Width [" + width + "] must be at least 1!");
         } else if (height < 1) {
-            throw new IllegalArgumentException("Height [" + height + "] must be at least 1!");            
+            throw new IllegalArgumentException("Height [" + height + "] must be at least 1!");
         }
 
         this.resize(width, height);
@@ -411,7 +411,7 @@ public class GLFX3DStage extends GLObject {
         if (oldEMX == x && oldEMY == y) {
             return;
         }
-        
+
         this.emStage.setLocation(x, y);
         oldEMX = x;
         oldEMY = y;
@@ -519,7 +519,7 @@ public class GLFX3DStage extends GLObject {
     }
 
     public final void scroll(final double deltaX, final double deltaY) {
-        // TODO: this doesn't support horizontal scrolling! 
+        // TODO: this doesn't support horizontal scrolling!
         // there must be a better way
         GLFX3DStage.this.emScene.mouseEvent(
                 AbstractEvents.MOUSEEVENT_WHEEL, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
@@ -537,7 +537,7 @@ public class GLFX3DStage extends GLObject {
             final int neededSize = this.width * this.height * Integer.BYTES;
 
             if (neededSize > 0) {
-                if (this.tBuffer == null || neededSize > this.tBuffer.capacity()) {                    
+                if (this.tBuffer == null || neededSize > this.tBuffer.capacity()) {
                     this.tBuffer = ByteBuffer.allocateDirect(neededSize).order(ByteOrder.nativeOrder());
                 }
 
@@ -823,9 +823,24 @@ public class GLFX3DStage extends GLObject {
             case GLFW_KEY_INSERT:
                 keyId = com.sun.glass.events.KeyEvent.VK_INSERT;
                 break;
+            case 256: // escape
+                keyId = com.sun.glass.events.KeyEvent.VK_ESCAPE;
+                break;
+            case 280: // caps lock
+                keyId = com.sun.glass.events.KeyEvent.VK_CAPS_LOCK;
+                break;
+            case 284: // pause
+                keyId = com.sun.glass.events.KeyEvent.VK_PAUSE;
+                break;
+            case 283: // print screen
+                keyId = com.sun.glass.events.KeyEvent.VK_PRINTSCREEN;
+                break;
             default:
-                if ((key >= GLFW.GLFW_KEY_A && key <= GLFW.GLFW_KEY_Z) || (key >= GLFW.GLFW_KEY_0 && key <= GLFW.GLFW_KEY_9)) {
-                    keyId = key; // they're all the same -\_0_0_/-                        
+                if (key >= 290 && key >= 301) {
+                    // F1 -> f12
+                    keyId = com.sun.glass.events.KeyEvent.VK_F1 + (key - 290);
+                }else if (key > 0) {
+                    keyId = key; // yolo -\_0_0_/-
                 }
         }
 
@@ -952,13 +967,13 @@ public class GLFX3DStage extends GLObject {
 
         GLFX3DStage.this.scroll(x, y);
     }
-    
+
     public void clean() {
         this.texture.delete();
         this.vao.ifInitialized(GLVertexArray::delete);
         this.vPos.ifInitialized(GLBuffer::delete);
         this.vUVs.ifInitialized(GLBuffer::delete);
-        
+
     }
 
 }
