@@ -26,18 +26,26 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_END;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_F1;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_F25;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_HOME;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_INSERT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAUSE;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_PRINT_SCREEN;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
 import org.slf4j.Logger;
@@ -824,17 +832,25 @@ public class GLFX3DStage extends GLObject {
             case GLFW_KEY_INSERT:
                 keyId = com.sun.glass.events.KeyEvent.VK_INSERT;
                 break;
-            case 256: // escape
+            case GLFW_KEY_ESCAPE:
                 keyId = com.sun.glass.events.KeyEvent.VK_ESCAPE;
                 break;
-            case 280: // caps lock
+            case GLFW_KEY_CAPS_LOCK:
                 keyId = com.sun.glass.events.KeyEvent.VK_CAPS_LOCK;
                 break;
-            case 284: // pause
+            case GLFW_KEY_PAUSE:
                 keyId = com.sun.glass.events.KeyEvent.VK_PAUSE;
                 break;
-            case 283: // print screen
+            case GLFW_KEY_PRINT_SCREEN:
                 keyId = com.sun.glass.events.KeyEvent.VK_PRINTSCREEN;
+                break;
+            case GLFW_KEY_LEFT_SHIFT:
+            case GLFW_KEY_RIGHT_SHIFT:
+                keyId = com.sun.glass.events.KeyEvent.VK_SHIFT;
+                break;
+            case GLFW_KEY_LEFT_CONTROL:
+            case GLFW_KEY_RIGHT_CONTROL:
+                keyId = com.sun.glass.events.KeyEvent.VK_CONTROL;
                 break;
             default:
                 if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
