@@ -30,6 +30,8 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_END;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_F1;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_F25;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_HOME;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_INSERT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT;
@@ -38,7 +40,6 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
-import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -836,9 +837,9 @@ public class GLFX3DStage extends GLObject {
                 keyId = com.sun.glass.events.KeyEvent.VK_PRINTSCREEN;
                 break;
             default:
-                if (key >= 290 && key >= 301) {
+                if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
                     // F1 -> f12
-                    keyId = com.sun.glass.events.KeyEvent.VK_F1 + (key - 290);
+                    keyId = com.sun.glass.events.KeyEvent.VK_F1 + (key - GLFW_KEY_F1);
                 }else if (key > 0) {
                     keyId = key; // yolo -\_0_0_/-
                 }
