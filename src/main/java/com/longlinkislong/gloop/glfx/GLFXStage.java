@@ -1,13 +1,52 @@
-package com.longlinkislong.gloop;
+package com.longlinkislong.gloop.glfx;
 
+import com.longlinkislong.gloop.GLBuffer;
+import com.longlinkislong.gloop.GLDrawMode;
+import com.longlinkislong.gloop.GLException;
+import com.longlinkislong.gloop.GLFramebufferResizeListener;
+import com.longlinkislong.gloop.GLKeyAction;
+import com.longlinkislong.gloop.GLKeyCharListener;
+import com.longlinkislong.gloop.GLKeyListener;
+import com.longlinkislong.gloop.GLKeyModifier;
+import com.longlinkislong.gloop.GLMat4;
+import com.longlinkislong.gloop.GLMat4D;
+import com.longlinkislong.gloop.GLMat4F;
+import com.longlinkislong.gloop.GLMouseButtonAction;
+import com.longlinkislong.gloop.GLMouseButtonListener;
+import com.longlinkislong.gloop.GLMousePositionListener;
+import com.longlinkislong.gloop.GLMouseScrollListener;
+import com.longlinkislong.gloop.GLObject;
+import com.longlinkislong.gloop.GLProgram;
+import com.longlinkislong.gloop.GLShader;
+import com.longlinkislong.gloop.GLShaderType;
+import com.longlinkislong.gloop.GLTask;
+import com.longlinkislong.gloop.GLTexture;
+import com.longlinkislong.gloop.GLTextureFormat;
+import com.longlinkislong.gloop.GLTextureInternalFormat;
+import com.longlinkislong.gloop.GLTextureMagFilter;
+import com.longlinkislong.gloop.GLTextureMinFilter;
+import com.longlinkislong.gloop.GLTextureParameters;
+import com.longlinkislong.gloop.GLTextureWrap;
+import com.longlinkislong.gloop.GLThread;
+import com.longlinkislong.gloop.GLTools;
+import com.longlinkislong.gloop.GLType;
+import com.longlinkislong.gloop.GLVec4D;
+import com.longlinkislong.gloop.GLVertexArray;
 import com.runouw.util.Lazy;
 import com.longlinkislong.gloop.GLVertexArray.DrawArraysTask;
+import com.longlinkislong.gloop.GLVertexAttributeSize;
+import com.longlinkislong.gloop.GLVertexAttributeType;
+import com.longlinkislong.gloop.GLVertexAttributes;
+import com.longlinkislong.gloop.GLViewport;
+import com.longlinkislong.gloop.GLWindow;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.cursor.CursorFrame;
 import com.sun.javafx.cursor.CursorType;
 import com.sun.javafx.embed.AbstractEvents;
+import com.sun.javafx.embed.EmbeddedSceneDSInterface;
 import com.sun.javafx.embed.EmbeddedSceneInterface;
 import com.sun.javafx.embed.EmbeddedStageInterface;
+import com.sun.javafx.embed.HostDragStartListener;
 import com.sun.javafx.embed.HostInterface;
 import com.sun.javafx.stage.EmbeddedWindow;
 import com.sun.javafx.tk.Toolkit;
@@ -23,8 +62,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import org.lwjgl.glfw.GLFW;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.Pane;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
@@ -60,10 +105,10 @@ import org.slf4j.MarkerFactory;
  * @author zmichaels, rhewitt (modifications)
  * @since 15.10.19
  */
-public class GLFX3DStage extends GLObject {
+public class GLFXStage extends GLObject {
 
     private static final Marker JAVAFX_MARKER = MarkerFactory.getMarker("JAVAFX");
-    private static final Logger LOGGER = LoggerFactory.getLogger(GLFX3DStage.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GLFXStage.class);
 
     /**
      * TODO: Show window with a dimmed color transform when unfocused (or expose
@@ -75,6 +120,8 @@ public class GLFX3DStage extends GLObject {
     }
 
     private GLMat4D matrix = GLMat4D.create().asStaticMat();
+
+    private GLFXDNDHandler dndHandler = new GLFXDNDHandler(GLFXStage.this);
 
     public void setMatrix(GLMat4 matrix) {
         this.matrix.set(matrix.asGLMat4D());
@@ -137,11 +184,11 @@ public class GLFX3DStage extends GLObject {
 
             // I don't know if this line does anything
             //emStage.focusUngrab();
-            if (GLFX3DStage.this.emStage != null) {
-                GLFX3DStage.this.emStage.setFocused(false, AbstractEvents.FOCUSEVENT_DEACTIVATED);
+            if (GLFXStage.this.emStage != null) {
+                GLFXStage.this.emStage.setFocused(false, AbstractEvents.FOCUSEVENT_DEACTIVATED);
             }
-        } else if (GLFX3DStage.this.emStage != null) {
-            GLFX3DStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
+        } else if (GLFXStage.this.emStage != null) {
+            GLFXStage.this.emStage.setFocused(true, AbstractEvents.FOCUSEVENT_ACTIVATED);
         }
     }
 
@@ -194,8 +241,8 @@ public class GLFX3DStage extends GLObject {
     }
 
     private static final Lazy<GLProgram> PROGRAM = new Lazy<>(() -> {
-        try (InputStream inVsh = GLFX3DStage.class.getResourceAsStream("fx.vs");
-                InputStream inFsh = GLFX3DStage.class.getResourceAsStream("fx.fs")) {
+        try (InputStream inVsh = GLFXStage.class.getResourceAsStream("fx.vs");
+                InputStream inFsh = GLFXStage.class.getResourceAsStream("fx.fs")) {
             final String srcVsh = GLTools.readAll(inVsh);
             final String srcFsh = GLTools.readAll(inFsh);
 
@@ -237,26 +284,30 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void setEmbeddedStage(EmbeddedStageInterface embeddedStage) {
-            if (GLFX3DStage.this.width > 0 && GLFX3DStage.this.height > 0) {
-                embeddedStage.setSize(GLFX3DStage.this.width, GLFX3DStage.this.height);
+            if (GLFXStage.this.width > 0 && GLFXStage.this.height > 0) {
+                embeddedStage.setSize(GLFXStage.this.width, GLFXStage.this.height);
             }
 
             embeddedStage.setLocation(0, 0);
-            GLFX3DStage.this.emStage = embeddedStage;
+            GLFXStage.this.emStage = embeddedStage;
         }
 
         @Override
         public void setEmbeddedScene(EmbeddedSceneInterface embeddedScene) {
-            if (GLFX3DStage.this.emScene == embeddedScene) {
+            if (GLFXStage.this.emScene == embeddedScene) {
                 return;
             }
 
-            if (GLFX3DStage.this.width > 0 && GLFX3DStage.this.height > 0) {
-                embeddedScene.setSize(GLFX3DStage.this.width, GLFX3DStage.this.height);
+            if (GLFXStage.this.width > 0 && GLFXStage.this.height > 0) {
+                embeddedScene.setSize(GLFXStage.this.width, GLFXStage.this.height);
             }
 
-            embeddedScene.setPixelScaleFactor(GLFX3DStage.this.scaleFactor);
-            GLFX3DStage.this.emScene = embeddedScene;
+            embeddedScene.setPixelScaleFactor(GLFXStage.this.scaleFactor);
+            GLFXStage.this.emScene = embeddedScene;
+
+            embeddedScene.setDragStartListener((EmbeddedSceneDSInterface dragSource, TransferMode dragAction) -> {
+                // TODO???
+            });
         }
 
         @Override
@@ -271,7 +322,7 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void repaint() {
-            GLFX3DStage.this.needsUpdate = true;
+            GLFXStage.this.needsUpdate = true;
         }
 
         @Override
@@ -286,10 +337,10 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void setCursor(CursorFrame cursorFrame) {
-            GLFX3DStage.this.cursorType = cursorFrame.getCursorType();
+            GLFXStage.this.cursorType = cursorFrame.getCursorType();
 
             if (applyCursors) {
-                switch (GLFX3DStage.this.cursorType) {
+                switch (GLFXStage.this.cursorType) {
                     case DEFAULT:
                         updateCursor(GLFXCursor.DEFAULT);
                         break;
@@ -380,7 +431,7 @@ public class GLFX3DStage extends GLObject {
      * @param height the height of the stage.
      * @since 15.09.21
      */
-    public GLFX3DStage(final GLThread thread, final int width, final int height) {
+    public GLFXStage(final GLThread thread, final int width, final int height) {
         super(thread);
 
         if (width < 1) {
@@ -400,7 +451,7 @@ public class GLFX3DStage extends GLObject {
      * @param height the height of the stage.
      * @since 15.09.21
      */
-    public GLFX3DStage(final int width, final int height) {
+    public GLFXStage(final int width, final int height) {
         this(GLThread.getDefaultInstance(), width, height);
 
         if (width < 1) {
@@ -442,6 +493,28 @@ public class GLFX3DStage extends GLObject {
             if (!this.stage.isShowing()) {
                 this.stage.show();
             }
+        }
+    }
+
+    public Scene getScene(){
+        if(this.stage != null){
+            return this.stage.getScene();
+        }
+        return null;
+    }
+    public Parent getRootNode(){
+        if(getScene() != null){
+            return getScene().getRoot();
+        }
+        return null;
+    }
+    public ObservableList<Node> getRootChildren() {
+        if (this.getRootNode() instanceof Group) {
+            return ((Group) this.getRootNode()).getChildren();
+        } else if (this.getRootNode() instanceof Pane) {
+            return ((Pane) this.getRootNode()).getChildren();
+        } else {
+            return FXCollections.emptyObservableList();
         }
     }
 
@@ -530,7 +603,7 @@ public class GLFX3DStage extends GLObject {
     public final void scroll(final double deltaX, final double deltaY) {
         // TODO: this doesn't support horizontal scrolling!
         // there must be a better way
-        GLFX3DStage.this.emScene.mouseEvent(
+        GLFXStage.this.emScene.mouseEvent(
                 AbstractEvents.MOUSEEVENT_WHEEL, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
                 leftButton, middleButton, rightButton,
                 mouseX, mouseY, mouseX, mouseY,
@@ -704,7 +777,7 @@ public class GLFX3DStage extends GLObject {
 
         @Override
         public void framebufferResizedActionPerformed(GLWindow glw, GLViewport view) {
-            GLFX3DStage.this.setParentWindowSize(view.width, view.height);
+            GLFXStage.this.setParentWindowSize(view.width, view.height);
         }
     }
 
@@ -764,8 +837,8 @@ public class GLFX3DStage extends GLObject {
             return;
         }
 
-        int mods = GLFX3DStage.this.ctrl ? AbstractEvents.MODIFIER_CONTROL : 0;
-        GLFX3DStage.this.emScene.keyEvent(AbstractEvents.KEYEVENT_TYPED, com.sun.glass.events.KeyEvent.VK_UNDEFINED, new char[]{c}, mods);
+        int mods = GLFXStage.this.ctrl ? AbstractEvents.MODIFIER_CONTROL : 0;
+        GLFXStage.this.emScene.keyEvent(AbstractEvents.KEYEVENT_TYPED, com.sun.glass.events.KeyEvent.VK_UNDEFINED, new char[]{c}, mods);
     }
 
     public void doKeyEvent(int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers) {
@@ -861,16 +934,16 @@ public class GLFX3DStage extends GLObject {
                 }
         }
 
-        GLFX3DStage.this.shift = modifiers.contains(GLKeyModifier.SHIFT);
-        GLFX3DStage.this.alt = modifiers.contains(GLKeyModifier.ALT);
-        GLFX3DStage.this.ctrl = modifiers.contains(GLKeyModifier.CONTROL);
-        GLFX3DStage.this.meta = modifiers.contains(GLKeyModifier.SUPER);
+        GLFXStage.this.shift = modifiers.contains(GLKeyModifier.SHIFT);
+        GLFXStage.this.alt = modifiers.contains(GLKeyModifier.ALT);
+        GLFXStage.this.ctrl = modifiers.contains(GLKeyModifier.CONTROL);
+        GLFXStage.this.meta = modifiers.contains(GLKeyModifier.SUPER);
 
         switch (action) {
             case KEY_PRESSED:
             case KEY_REPEAT:
                 if (keyId > -1) {
-                    GLFX3DStage.this.emScene.keyEvent(
+                    GLFXStage.this.emScene.keyEvent(
                             AbstractEvents.KEYEVENT_PRESSED,
                             keyId,
                             new char[]{}, mods);
@@ -878,7 +951,7 @@ public class GLFX3DStage extends GLObject {
                 break;
             case KEY_RELEASE:
                 if (keyId > -1) {
-                    GLFX3DStage.this.emScene.keyEvent(
+                    GLFXStage.this.emScene.keyEvent(
                             AbstractEvents.KEYEVENT_RELEASED,
                             keyId,
                             new char[]{}, mods);
@@ -908,7 +981,7 @@ public class GLFX3DStage extends GLObject {
                     break;
             }
 
-            GLFX3DStage.this.emScene.mouseEvent(
+            GLFXStage.this.emScene.mouseEvent(
                     AbstractEvents.MOUSEEVENT_PRESSED, buttonId,
                     leftButton, middleButton, rightButton,
                     mouseX, mouseY, mouseX, mouseY,
@@ -930,7 +1003,7 @@ public class GLFX3DStage extends GLObject {
                     break;
             }
 
-            GLFX3DStage.this.emScene.mouseEvent(
+            GLFXStage.this.emScene.mouseEvent(
                     AbstractEvents.MOUSEEVENT_RELEASED, buttonId,
                     leftButton, middleButton, rightButton,
                     mouseX, mouseY, mouseAbsX, mouseAbsY,
@@ -939,42 +1012,44 @@ public class GLFX3DStage extends GLObject {
     }
 
     public void doMousePositionEvent(double x, double y) {
-        if (GLFX3DStage.this.emScene == null) {
+        if (GLFXStage.this.emScene == null) {
             return;
         }
 
         MousePos mouse = transformMouse(x, y);
 
-        GLFX3DStage.this.mouseX = (int) mouse.x;
-        GLFX3DStage.this.mouseY = (int) mouse.y;
-        GLFX3DStage.this.mouseAbsX = GLFX3DStage.this.mouseX + oldEMX;
-        GLFX3DStage.this.mouseAbsY = GLFX3DStage.this.mouseY + oldEMY;
+        GLFXStage.this.mouseX = (int) mouse.x;
+        GLFXStage.this.mouseY = (int) mouse.y;
+        GLFXStage.this.mouseAbsX = GLFXStage.this.mouseX + oldEMX;
+        GLFXStage.this.mouseAbsY = GLFXStage.this.mouseY + oldEMY;
 
-        if (GLFX3DStage.this.leftButton) {
-            GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,
-                    GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
-                    GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
-                    GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
+        if (GLFXStage.this.leftButton) {
+            GLFXStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_PRIMARY_BUTTON,
+                    GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
+                    GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY,
+                    GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
                     0, false);
-        } else if (GLFX3DStage.this.rightButton) {
-            GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON,
-                    GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
-                    GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
-                    GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
+        } else if (GLFXStage.this.rightButton) {
+            GLFXStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_SECONDARY_BUTTON,
+                    GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
+                    GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY,
+                    GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
                     0, false);
-        } else if (GLFX3DStage.this.middleButton) {
-            GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON,
-                    GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
-                    GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
-                    GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
+        } else if (GLFXStage.this.middleButton) {
+            GLFXStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_DRAGGED, AbstractEvents.MOUSEEVENT_MIDDLE_BUTTON,
+                    GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
+                    GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY,
+                    GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
                     0, false);
         } else {
-            GLFX3DStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_MOVED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
-                    GLFX3DStage.this.leftButton, GLFX3DStage.this.middleButton, GLFX3DStage.this.rightButton,
-                    GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY, GLFX3DStage.this.mouseX, GLFX3DStage.this.mouseY,
-                    GLFX3DStage.this.shift, GLFX3DStage.this.ctrl, GLFX3DStage.this.alt, GLFX3DStage.this.meta,
+            GLFXStage.this.emScene.mouseEvent(AbstractEvents.MOUSEEVENT_MOVED, AbstractEvents.MOUSEEVENT_NONE_BUTTON,
+                    GLFXStage.this.leftButton, GLFXStage.this.middleButton, GLFXStage.this.rightButton,
+                    GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY,
+                    GLFXStage.this.shift, GLFXStage.this.ctrl, GLFXStage.this.alt, GLFXStage.this.meta,
                     0, false);
         }
+
+        dndHandler.mouseUpdate(GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY, GLFXStage.this.leftButton);
     }
 
     public void doMouseScrollEvent(double x, double y) {
@@ -982,7 +1057,7 @@ public class GLFX3DStage extends GLObject {
             return;
         }
 
-        GLFX3DStage.this.scroll(x, y);
+        GLFXStage.this.scroll(x, y);
     }
 
     public void clean() {

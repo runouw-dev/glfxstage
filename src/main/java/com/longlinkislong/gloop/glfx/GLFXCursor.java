@@ -3,8 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.longlinkislong.gloop;
+package com.longlinkislong.gloop.glfx;
 
+import com.longlinkislong.gloop.GLQuery;
+import com.longlinkislong.gloop.GLWindow;
 import java.util.function.LongSupplier;
 import com.runouw.util.Lazy;
 
