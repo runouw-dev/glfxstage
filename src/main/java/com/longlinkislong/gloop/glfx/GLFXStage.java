@@ -30,6 +30,7 @@ import com.longlinkislong.gloop.GLTextureWrap;
 import com.longlinkislong.gloop.GLThread;
 import com.longlinkislong.gloop.GLTools;
 import com.longlinkislong.gloop.GLType;
+import com.longlinkislong.gloop.GLVec2D;
 import com.longlinkislong.gloop.GLVec4D;
 import com.longlinkislong.gloop.GLVertexArray;
 import com.runouw.util.Lazy;
@@ -39,6 +40,7 @@ import com.longlinkislong.gloop.GLVertexAttributeType;
 import com.longlinkislong.gloop.GLVertexAttributes;
 import com.longlinkislong.gloop.GLViewport;
 import com.longlinkislong.gloop.GLWindow;
+import com.runouw.util.Replaceable;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.cursor.CursorFrame;
 import com.sun.javafx.cursor.CursorType;
@@ -61,6 +63,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -119,12 +122,14 @@ public class GLFXStage extends GLObject {
         PlatformImpl.startup(() -> LOGGER.debug(JAVAFX_MARKER, "JavaFX initialized!"));
     }
 
-    private GLMat4D matrix = GLMat4D.create().asStaticMat();
-
     private GLFXDNDHandler dndHandler = new GLFXDNDHandler(GLFXStage.this);
 
-    public void setMatrix(GLMat4 matrix) {
-        this.matrix.set(matrix.asGLMat4D());
+    private Replaceable<Function<GLVec2D, GLVec2D>> mouseTransform = new Replaceable<>(() -> {
+        return (p) -> p;
+    });
+
+    public void setMouseTransform(Function<GLVec2D, GLVec2D> transformFunc){
+        mouseTransform.set(transformFunc);
     }
 
     private class MousePos {
@@ -139,16 +144,10 @@ public class GLFXStage extends GLObject {
     }
 
     private MousePos transformMouse(double x, double y) {
-        if (useTransformMouse) {
-            x /= Math.max(windowWidth, 1);
-            y /= Math.max(windowHeight, 1);
+        final GLVec2D mousePos = mouseTransform.get().apply(GLVec2D.create(x, y));
 
-            final GLVec4D vec = GLVec4D.create(x, y, 0.0, 1.0);
-            final GLVec4D after = matrix.inverse().multiply(vec);
-
-            x = after.x() * width;
-            y = after.y() * height;
-        }
+        x = mousePos.x();
+        y = mousePos.y();
 
         return new MousePos(x, y);
     }
@@ -158,14 +157,9 @@ public class GLFXStage extends GLObject {
     private int width;
     private int height;
     private final GLMat4D projection = GLMat4D.ortho(0.0, 1.0, 1.0, 0.0, 0.0, 1.0).asStaticMat();
-    private boolean focus = false;
-    private boolean useTransformMouse = true;
+    private boolean focus = true;
     private boolean applyCursors = true;
     private CursorType cursorType = CursorType.DEFAULT;
-
-    public void setUseTransformMouse(boolean useTransformMouse) {
-        this.useTransformMouse = useTransformMouse;
-    }
 
     public void setFocus(boolean focus) {
         if (this.focus == focus) {
@@ -337,6 +331,7 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void setCursor(CursorFrame cursorFrame) {
+
             GLFXStage.this.cursorType = cursorFrame.getCursorType();
 
             if (applyCursors) {
@@ -387,6 +382,7 @@ public class GLFXStage extends GLObject {
                         updateCursor(GLFXCursor.WAIT);
                         break;
                     default:
+                        LOGGER.warn("Unknown cursor " + cursorFrame.getCursorType());
                         break;
                 }
             }
@@ -466,7 +462,13 @@ public class GLFXStage extends GLObject {
     private int oldEMX = 0;
     private int oldEMY = 0;
 
-    public void setEMLocation(int x, int y) {
+    /**
+     * Sets the stage's absolute position. This must be accurate for popup menus
+     * to appear in the correct location.
+     * @param x
+     * @param y
+     */
+    public void setStageABSLocation(int x, int y) {
         // caling the same position actually breaks menu components, so this avoids it
         if (oldEMX == x && oldEMY == y) {
             return;
@@ -647,20 +649,10 @@ public class GLFXStage extends GLObject {
         } else {
             cursor.apply(this.window.get());
         }
-
     }
 
-    /**
-     * Creates a new GLTask that draws the stage.
-     *
-     * @return the GLTask.
-     * @since 15.09.21
-     */
-    public GLTask newDrawTask() {
+    public GLTask newTextureBindTask(int loc){
         final GLTask bindTask = GLTask.create(() -> {
-
-            PROGRAM.get().setUniformMatrixF("vProj", this.matrix.multiply(this.projection));
-
             if (this.needsRecreate) {
                 if (this.width > 0 && this.height > 0) {
                     if (this.texture != null) {
@@ -687,13 +679,32 @@ public class GLFXStage extends GLObject {
                 this.needsUpdate = false;
             }
 
-            this.texture.bind(0);
+            this.texture.bind(loc);
         });
+
+        return bindTask;
+    }
+
+    /**
+     * Creates a new GLTask that draws the stage.
+     *
+     * @return the GLTask.
+     * @since 15.09.21
+     */
+    public GLTask newDrawTask() {
+        final int bindLoc = 0;
+        final GLTask bindTask = GLTask.create(() -> {
+            this.projection.set(GLMat4D.ortho(0, (double)windowWidth/width, (double)windowHeight/height, 0, -1, 1));
+
+            PROGRAM.get().setUniformMatrixF("vProj", this.projection);
+        });
+        final GLTask newTextureBindTask = newTextureBindTask(bindLoc);
 
         return GLTask.join(
                 PROGRAM.get().new UseTask(),
-                PROGRAM.get().new SetUniformITask("fxTexture", 0),
+                PROGRAM.get().new SetUniformITask("fxTexture", bindLoc),
                 bindTask,
+                newTextureBindTask,
                 vao.get().new DrawArraysTask(GLDrawMode.GL_TRIANGLE_STRIP, 0, 4));
     }
 
@@ -707,7 +718,9 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void keyActionPerformed(GLWindow glw, int key, int scanCode, GLKeyAction action, Set<GLKeyModifier> modifiers) {
-            doKeyEvent(key, scanCode, action, modifiers);
+            Platform.runLater(() -> {
+                doKeyEvent(key, scanCode, action, modifiers);
+            });
         }
     }
 
@@ -721,7 +734,9 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void charTypePerformed(GLWindow glw, char c) {
-            doKeyCharEvent(c);
+            Platform.runLater(() -> {
+                doKeyCharEvent(c);
+            });
         }
     }
 
@@ -747,7 +762,9 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void mouseButtonActionPerformed(GLWindow glw, int button, GLMouseButtonAction action, Set<GLKeyModifier> set) {
-            doMouseButtonEvent(button, action, set);
+            Platform.runLater(() -> {
+                doMouseButtonEvent(button, action, set);
+            });
         }
     }
 
@@ -761,7 +778,9 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void mousePositionActionPerformed(GLWindow glw, double x, double y) {
-            doMousePositionEvent(x, y);
+            Platform.runLater(() -> {
+                doMousePositionEvent(x, y);
+            });
         }
     }
 
@@ -769,7 +788,9 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void mouseScrollActionPerformed(GLWindow glw, double x, double y) {
-            doMouseScrollEvent(x, y);
+            Platform.runLater(() -> {
+                doMouseScrollEvent(x, y);
+            });
         }
     }
 
@@ -777,7 +798,9 @@ public class GLFXStage extends GLObject {
 
         @Override
         public void framebufferResizedActionPerformed(GLWindow glw, GLViewport view) {
-            GLFXStage.this.setParentWindowSize(view.width, view.height);
+            Platform.runLater(() -> {
+                GLFXStage.this.setParentWindowSize(view.width, view.height);
+            });
         }
     }
 
@@ -1017,6 +1040,8 @@ public class GLFXStage extends GLObject {
         }
 
         MousePos mouse = transformMouse(x, y);
+
+
 
         GLFXStage.this.mouseX = (int) mouse.x;
         GLFXStage.this.mouseY = (int) mouse.y;
