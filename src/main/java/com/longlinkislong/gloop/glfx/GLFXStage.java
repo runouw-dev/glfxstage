@@ -151,6 +151,10 @@ public class GLFXStage extends GLObject {
     private boolean applyCursors = true;
     private CursorType cursorType = CursorType.DEFAULT;
 
+    public boolean isFocus() {
+        return this.focus;
+    }
+
     public void setFocus(boolean focus) {
         if (this.focus == focus) {
             // no change
