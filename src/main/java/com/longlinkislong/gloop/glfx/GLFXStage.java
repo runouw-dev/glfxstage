@@ -8,7 +8,6 @@ import com.longlinkislong.gloop.GLKeyAction;
 import com.longlinkislong.gloop.GLKeyCharListener;
 import com.longlinkislong.gloop.GLKeyListener;
 import com.longlinkislong.gloop.GLKeyModifier;
-import com.longlinkislong.gloop.GLMat4;
 import com.longlinkislong.gloop.GLMat4D;
 import com.longlinkislong.gloop.GLMat4F;
 import com.longlinkislong.gloop.GLMouseButtonAction;
@@ -31,7 +30,6 @@ import com.longlinkislong.gloop.GLThread;
 import com.longlinkislong.gloop.GLTools;
 import com.longlinkislong.gloop.GLType;
 import com.longlinkislong.gloop.GLVec2D;
-import com.longlinkislong.gloop.GLVec4D;
 import com.longlinkislong.gloop.GLVertexArray;
 import com.runouw.util.Lazy;
 import com.longlinkislong.gloop.GLVertexArray.DrawArraysTask;
@@ -69,7 +67,6 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Pane;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK;
@@ -642,33 +639,38 @@ public class GLFXStage extends GLObject {
         }
     }
 
+    public GLTexture getAndUpdateTexture(){
+        if (this.needsRecreate) {
+            if (this.width > 0 && this.height > 0) {
+                if (this.texture != null) {
+                    this.texture.delete();
+                }
+
+                this.texture = new GLTexture(this.getThread())
+                        .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height);
+
+                this.needsRecreate = false;
+            } else {
+                LOGGER.debug("Ignored invalid request to resize texture to [width={}, height={}]", this.width, this.height);
+            }
+        }
+
+        if (this.needsUpdate) {
+            this.updateTexture();
+
+            this.texture
+                    .updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer)
+                    .setAttributes(new GLTextureParameters()
+                            .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
+                            .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
+            this.needsUpdate = false;
+        }
+        return this.texture;
+    }
+
     public GLTask newTextureBindTask(int loc){
         final GLTask bindTask = GLTask.create(() -> {
-            if (this.needsRecreate) {
-                if (this.width > 0 && this.height > 0) {
-                    if (this.texture != null) {
-                        this.texture.delete();
-                    }
-
-                    this.texture = new GLTexture(this.getThread())
-                            .allocate(1, GLTextureInternalFormat.GL_RGBA8, this.width, this.height);
-
-                    this.needsRecreate = false;
-                } else {
-                    LOGGER.debug("Ignored invalid request to resize texture to [width={}, height={}]", this.width, this.height);
-                }
-            }
-
-            if (this.needsUpdate) {
-                this.updateTexture();
-
-                this.texture
-                        .updateImage(0, 0, 0, this.width, this.height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, this.tBuffer)
-                        .setAttributes(new GLTextureParameters()
-                                .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
-                                .withWrap(GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE, GLTextureWrap.GL_CLAMP_TO_EDGE));
-                this.needsUpdate = false;
-            }
+            getAndUpdateTexture();
 
             this.texture.bind(loc);
         });
