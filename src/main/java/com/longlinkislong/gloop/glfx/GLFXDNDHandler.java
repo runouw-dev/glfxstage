@@ -33,6 +33,7 @@ import com.sun.javafx.embed.HostDragStartListener;
 import com.sun.javafx.tk.Toolkit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * An utility class to connect DnD mechanism of Swing and FX.
@@ -93,11 +94,13 @@ final class GLFXDNDHandler {
     }
 
     private DropHandlerData getDropTarget(int x, int y, int sx, int sy){
-        if(dropTarget == null){
+        DropHandlerData dt = DROP_TARGETS.stream().filter(data -> data.dt == dropTarget).findFirst().orElse(null);
+        if(dt == null){
             dropTarget = scene.createDropTarget();
-            DROP_TARGETS.add(new DropHandlerData(dropTarget));
+            dt = new DropHandlerData(dropTarget);
+            DROP_TARGETS.add(dt);
         }
-        DropHandlerData dt = DROP_TARGETS.stream().filter(data -> data.dt == dropTarget).findFirst().get();
+
         dt.x = x;
         dt.y = y;
         dt.sx = sx;
