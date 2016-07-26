@@ -33,7 +33,6 @@ import com.sun.javafx.embed.HostDragStartListener;
 import com.sun.javafx.tk.Toolkit;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.application.Platform;
 
 /**
  * An utility class to connect DnD mechanism of Swing and FX.
@@ -119,8 +118,6 @@ final class GLFXDNDHandler {
 
         this._dropInfo = new DropInfo(dragSource, dragAction);
         staticDropInfo = _dropInfo;
-
-        System.out.println("Drag start! " + dragSource);
     };
 
     public void mousePosition(final int x, final int y, final int sx, final int sy) {
@@ -141,7 +138,6 @@ final class GLFXDNDHandler {
             for(DropHandlerData dt:DROP_TARGETS){
                 //dt.handleDragLeave();
                 TransferMode newMode = dt.handleDragDrop();
-                System.out.println("got " + newMode);
                 if(newMode != null){
                     finalMode = newMode;
                 }
