@@ -31,6 +31,8 @@ import javafx.scene.input.TransferMode;
 import com.sun.javafx.embed.EmbeddedSceneInterface;
 import com.sun.javafx.embed.HostDragStartListener;
 import com.sun.javafx.tk.Toolkit;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.application.Platform;
 
 /**
@@ -41,9 +43,48 @@ final class GLFXDNDHandler {
     private final EmbeddedSceneInterface scene;
     private final GLFXStage glfxStage;
 
-    private static EmbeddedSceneDSInterface dragSource = null;
-    private static TransferMode dragAction = null;
+
+
+    private class DropInfo{
+        private final EmbeddedSceneDSInterface dragSource;
+        private final TransferMode dragAction;
+
+        public DropInfo(EmbeddedSceneDSInterface dragSource, TransferMode dragAction) {
+            this.dragSource = dragSource;
+            this.dragAction = dragAction;
+        }
+    }
+    private class DropHandlerData{
+        private int x;
+        private int y;
+        private int sx;
+        private int sy;
+        private final EmbeddedSceneDTInterface dt;
+
+        public DropHandlerData(EmbeddedSceneDTInterface dropTarget) {
+            this.dt = dropTarget;
+        }
+
+        private void handleDragLeave(){
+            dt.handleDragLeave();
+        }
+        private void handleDragEnter(){
+            dt.handleDragEnter(x, y, sx, sy, staticDropInfo.dragAction, staticDropInfo.dragSource);
+        }
+        private void handleDragOver(){
+            dt.handleDragOver(x, y, sx, sy, staticDropInfo.dragAction);
+        }
+        private TransferMode handleDragDrop(){
+            return dt.handleDragDrop(x, y, x, y, staticDropInfo.dragAction);
+        }
+
+    }
+
+    private static DropInfo staticDropInfo;
+    private DropInfo _dropInfo;
+
     private EmbeddedSceneDTInterface dropTarget = null;
+    private final static List<DropHandlerData> DROP_TARGETS = new ArrayList<>();
 
     GLFXDNDHandler(final EmbeddedSceneInterface scene, final GLFXStage glfxStage) {
         this.scene = scene;
@@ -52,11 +93,17 @@ final class GLFXDNDHandler {
         scene.setDragStartListener(getDragStartListener);
     }
 
-    private EmbeddedSceneDTInterface getDropTarget(){
+    private DropHandlerData getDropTarget(int x, int y, int sx, int sy){
         if(dropTarget == null){
             dropTarget = scene.createDropTarget();
+            DROP_TARGETS.add(new DropHandlerData(dropTarget));
         }
-        return dropTarget;
+        DropHandlerData dt = DROP_TARGETS.stream().filter(data -> data.dt == dropTarget).findFirst().get();
+        dt.x = x;
+        dt.y = y;
+        dt.sx = sx;
+        dt.sy = sy;
+        return dt;
     }
 
     HostDragStartListener getDragStartListener = (EmbeddedSceneDSInterface dragSource, TransferMode dragAction) -> {
@@ -70,37 +117,43 @@ final class GLFXDNDHandler {
         // TODO: find out how to get dragboard?
         // TODO: render dragboard image to texture and expose it so user can draw it
 
-        this.dragSource = dragSource;
-        this.dragAction = dragAction;
+        this._dropInfo = new DropInfo(dragSource, dragAction);
+        staticDropInfo = _dropInfo;
 
         System.out.println("Drag start! " + dragSource);
     };
 
     public void mousePosition(final int x, final int y, final int sx, final int sy) {
         // TODO: update drag image position
-        if(dragSource != null){
-            EmbeddedSceneDTInterface dt = getDropTarget();
+        if(staticDropInfo != null){
+            DropHandlerData dt = getDropTarget(x, y, sx, sy);
 
             dt.handleDragLeave();
 
-            dt.handleDragEnter(x, y, sx, sy, dragAction, dragSource);
-            dt.handleDragOver(x, y, sx, sy, dragAction);
+            dt.handleDragEnter();
+            dt.handleDragOver();
         }
     }
 
     public void mouseReleased(final int x, final int y, final int sx, final int sy){
-        if(dragSource != null){
-            getDropTarget().handleDragDrop(x, y, sx, sy, dragAction);
-
-            // clear these next frame
-            Platform.runLater(() -> {
-                if(dragSource != null){
-                    dragSource.dragDropEnd(dragAction);
-
-                    dragSource = null;
-                    dropTarget = null;
+        if(staticDropInfo != null && _dropInfo == staticDropInfo){ // only one handler will handle the drop for all of them
+            TransferMode finalMode = null;
+            for(DropHandlerData dt:DROP_TARGETS){
+                //dt.handleDragLeave();
+                TransferMode newMode = dt.handleDragDrop();
+                System.out.println("got " + newMode);
+                if(newMode != null){
+                    finalMode = newMode;
                 }
-            });
+            }
+
+            staticDropInfo.dragSource.dragDropEnd(finalMode);
+
+            // clear
+            _dropInfo = null;
+            staticDropInfo = null;
+            DROP_TARGETS.clear();
         }
+        dropTarget = null;
     }
 }
