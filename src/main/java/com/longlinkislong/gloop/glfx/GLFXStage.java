@@ -80,6 +80,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_F25;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_HOME;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_INSERT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN;
@@ -87,6 +88,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAUSE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PRINT_SCREEN;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_ALT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
@@ -944,6 +946,10 @@ public class GLFXStage extends GLObject {
             case GLFW_KEY_LEFT_CONTROL:
             case GLFW_KEY_RIGHT_CONTROL:
                 keyId = com.sun.glass.events.KeyEvent.VK_CONTROL;
+                break;
+            case GLFW_KEY_LEFT_ALT:
+            case GLFW_KEY_RIGHT_ALT:
+                keyId = com.sun.glass.events.KeyEvent.VK_ALT;
                 break;
             default:
                 if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
