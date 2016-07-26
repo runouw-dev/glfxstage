@@ -1,262 +1,292 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
+
 package com.longlinkislong.gloop.glfx;
 
-/**
- *
- * From: https://github.com/empirephoenix/JME3-JFX/tree/master/src/main/java/com/jme3x/jfx
- */
-import java.util.HashSet;
-import java.util.function.Function;
-
-import javafx.geometry.Bounds;
+import com.sun.javafx.embed.EmbeddedSceneDSInterface;
+import com.sun.javafx.embed.EmbeddedSceneDTInterface;
+import java.util.ArrayList;
+import java.util.List;
+import javafx.scene.input.TransferMode;
+import com.sun.javafx.embed.EmbeddedSceneInterface;
+import com.sun.javafx.embed.HostDragStartListener;
+import com.sun.javafx.scene.input.DragboardHelper;
+import com.sun.javafx.tk.Toolkit;
+import java.util.function.Consumer;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseDragEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.TransferMode;
+import javafx.scene.input.Dragboard;
 
 /**
- * Synthetic D&D manager to circumvent large amount of internal unreliable api.
- * Reuses default eventhandlers where possible
+ * An utility class to connect DnD mechanism of Swing and FX.
  */
-public class GLFXDNDHandler {
+final class GLFXDNDHandler {
 
-    private HashSet<Node> entered = new HashSet<>();
+    private final EmbeddedSceneInterface scene;
+    private final GLFXStage glfxStage;
 
-    private GLFXStage glfxStage;
+    private static EmbeddedSceneDSInterface dragSource = null;
+    private static TransferMode dragAction = null;
+    private EmbeddedSceneDTInterface dropTarget = null;
 
-    private Function<Exception, Void> exceptionHandler;
+    /**
+     * List of targets that the mouse is over
+     */
+    private List<Node> dragEntered = new ArrayList<>();
 
-    SynthDragBoard dragAndDrop;
+    /**
+     * Event to assign to nodes when they are moused over or dropped on
+     */
+    private Dragboard dragBoard = null;
 
-    private Node dragging;
+    private Parent getRootNode(){
+        return glfxStage.getRootNode();
+    }
 
-    private int lasty;
-
-    private int lastx;
-
-    private int DRAG_TRIGGER = 1;
-
-    public GLFXDNDHandler(final GLFXStage glfxStage) {
+    GLFXDNDHandler(final EmbeddedSceneInterface scene, final GLFXStage glfxStage) {
+        this.scene = scene;
         this.glfxStage = glfxStage;
+
+        scene.setDragStartListener(getDragStartListener);
     }
 
-    private void exception(final Exception e) {
-        if (this.exceptionHandler != null) {
-            this.exceptionHandler.apply(e);
-        } else {
-            e.printStackTrace();
+    private EmbeddedSceneDTInterface getDropTarget(){
+        if(dropTarget == null){
+            dropTarget = scene.createDropTarget();
         }
+        return dropTarget;
     }
 
-    public void setExceptionHandler(final Function<Exception, Void> exceptionHandler) {
-        this.exceptionHandler = exceptionHandler;
-    }
-
-    public void toFront(final Node target) {
-        if (target.getParent() != null) {
-            final Parent parent = target.getParent();
-            if (parent.getParent() == null) {
-                // if this is the first child under the rootnode
-                target.toFront();
-                return;
-            }
-            this.toFront(parent);
+    HostDragStartListener getDragStartListener = (EmbeddedSceneDSInterface dragSource, TransferMode dragAction) -> {
+        if(!Toolkit.getToolkit().isFxUserThread()){
+            throw new Error("Not on FX thread!");
         }
-    }
-
-    public void mouseUpdate(final int x, final int y, final int sx, final int sy, final boolean mousePressed) {
-        if (mousePressed) {
-            if (this.lastx == -1) {
-                this.lastx = x;
-                this.lasty = y;
-            }
-            if (Math.abs(x - this.lastx) < this.DRAG_TRIGGER && Math.abs(y - this.lasty) < this.DRAG_TRIGGER) {
-                return;
-            }
-
-            if (this.dragAndDrop == null && this.dragging == null) {
-                final Node dragElement = this.getDragSourceAt(this.glfxStage.getRootNode(), x, y);
-                if (dragElement != null) {
-                    this.toFront(dragElement);
-                    if (dragElement.getOnMouseDragged() != null) {
-                        this.dragging = dragElement;
-                    } else if (dragElement.getOnDragDetected() != null) {
-                        dragElement.screenToLocal(sx, sy);
-                        final Point2D local = dragElement.sceneToLocal(x, y);
-
-                        this.startDragAndDrop(local.getX(), local.getY(), dragElement, sx, sy);
-                    }
-                    // allow one pulse for other event processing
-                    return;
-                }
-            }
-        } else {
-            this.lastx = -1;
-            this.lasty = -1;
-            if (this.dragging != null) {
-                this.dragging = null;
-            }
-            if (this.dragAndDrop != null) {
-                this.drop(x, y);
-            }
+        if(dragSource == null){
+            throw new Error("Drag source cannot be null!");
         }
-        if (this.dragging != null) {
-            final Point2D local = this.dragging.sceneToLocal(x, y);
-            this.dragging.getOnMouseDragged().handle(new MouseEvent(this.dragging, null, null, local.getX(), local.getY(), sx, sy, MouseButton.PRIMARY, 1, false, false, false, false, true, false, false, false, false, false, null));
-        }
-        if (this.dragAndDrop != null) {
-            this.updateDragAndDrop(x, y, sx, sy);
+
+        // TODO: find out how to get dragboard?
+        // TODO: render dragboard image to texture and expose it so user can draw it
+
+        this.dragSource = dragSource;
+        this.dragAction = dragAction;
+
+        System.out.println("Drag start! " + dragSource);
+    };
+
+    public void mousePosition(final int x, final int y, final int sx, final int sy) {
+        // TODO: update drag image position
+        if(dragSource != null){
+            this.processDragOver(x, y, sx, sy);
         }
     }
 
-    private void updateDragAndDrop(final int x, final int y, final int sx, final int sy) {
-        if (this.dragAndDrop.isAbort()) {
-            this.lastx = -1;
-            this.lasty = -1;
-            this.dragAndDrop = null;
+    public void mouseReleased(final int x, final int y, final int sx, final int sy){
+        if(dragSource != null){
+            getDropTarget().handleDragDrop(x, y, sx, sy, dragAction);
+
+            /*
+            dragEntered.forEach(node -> {
+                callDragExited(node, x, y, sx, sy, dragAction);
+            });
+            dragEntered.clear();
+
+
+            Node under = pick(getRootNode(), x, y);
+            if(under != null){
+                callDragDropped(under, x, y, sx, sy, dragAction);
+            }
+            */
+
+            dragSource.dragDropEnd(dragAction);
+            dragSource = null;
+            dropTarget = null;
         }
-        final Node dragProxy = this.dragAndDrop.getDragProxy();
-        if (dragProxy != null) {
-            dragProxy.setLayoutX(x);
-            dragProxy.setLayoutY(y);
-            dragProxy.toFront();
-        }
-        this.processDragEvents(this.glfxStage.getRootNode(), x, y, sx, sy);
     }
 
-    private void drop(final int x, final int y) {
-        this.glfxStage.getRootChildren().remove(this.dragAndDrop.getDragProxy());
+    /**
+     * Processes the drag enter and exit events, also updates the overTargets
+     * container.
+     * @param current
+     * @param x
+     * @param y
+     * @param sx
+     * @param sy
+     * @return
+     */
+    private void processDragOver(final int x, final int y, final int sx, final int sy) {
+        getDropTarget().handleDragLeave();
 
-        for (final Node enter : this.entered) {
-            if (enter.onDragExitedProperty() != null) {
-                final DragEvent event = new DragEvent(this.dragAndDrop, null, DragEvent.DRAG_EXITED_TARGET, null, x, y, x, x, TransferMode.COPY, null, null, null);
-                try {
-                    enter.getOnDragExited().handle(event);
-                } catch (final Exception e) {
-                    this.exception(e);
-                }
+        getDropTarget().handleDragEnter(x, y, sx, sy, dragAction, dragSource);
+        getDropTarget().handleDragOver(x, y, sx, sy, dragAction);
+
+        // looks like the above relaces all of this:
+
+        //List<Node> underNodes = new ArrayList<>();
+
+        //forAllUnder(getRootNode(), sx, sy, node -> {
+        //    underNodes.add(node);
+        //});
+
+
+
+        /*
+        // exited
+        for(int i=0;i<dragEntered.size();i++){
+            Node node = dragEntered.get(i);
+            if(!underNodes.contains(node)){
+                i--;
+                dragEntered.remove(node);
+
+
+
+                //callDragExited(node, x, y, sx, sy, dragAction);
             }
         }
-        final Node dropTarget = this.getDropTargetAt(this.glfxStage.getRootNode(), x, y);
-        if (dropTarget != null) {
-            this.dragAndDrop.getDataTransfer().put("targetElement", dropTarget);
-            final DragEvent event = new DragEvent(this.dragAndDrop, null, DragEvent.DRAG_DROPPED, null, x, y, x, x, TransferMode.COPY, null, null, null);
+
+        // entered
+        for(Node node:underNodes){
+            if(!dragEntered.contains(node)){
+                dragEntered.add(node);
+
+                callDragEntered(node, x, y, sx, sy, dragAction);
+            }
+            callDragOver(node, x, y, sx, sy, dragAction);
+        }
+        */
+    }
+
+    private void callDragOver(Node node, double x, double y, double sx, double sy, TransferMode mode){
+        if (node.getOnDragOver() != null) {
+            final DragEvent event = new DragEvent(null, node, DragEvent.DRAG_OVER, this.dragBoard, x, y, sx, sy, mode, null, null, null);
             try {
-                dropTarget.getOnDragDropped().handle(event);
+                node.getOnDragOver().handle(event);
             } catch (final Exception e) {
-                this.exception(e);
+                throw e;
             }
         }
-        this.dragAndDrop = null;
+    }
+    private void callDragEntered(Node node, double x, double y, double sx, double sy, TransferMode mode){
+        if (node.getOnDragEntered() != null) {
+            final DragEvent event = new DragEvent(null, node, DragEvent.DRAG_ENTERED_TARGET, this.dragBoard, x, y, sx, sy, mode, null, null, null);
+            try {
+                node.getOnDragEntered().handle(event);
+            } catch (final Exception e) {
+                throw e;
+            }
+        }
+    }
+    private void callDragExited(Node node, double x, double y, double sx, double sy, TransferMode mode){
+        if (node.getOnDragExited() != null) {
+            final DragEvent event = new DragEvent(null, node, DragEvent.DRAG_EXITED_TARGET, this.dragBoard, x, y, sx, sy, mode, null, null, null);
+            try {
+                node.getOnDragExited().handle(event);
+            } catch (final Exception e) {
+                throw e;
+            }
+        }
+    }
+    private void callDragDropped(Node node, double x, double y, double sx, double sy, TransferMode mode){
+        if (node.getOnDragDropped() != null) {
+            final DragEvent event = new DragEvent(null, node, DragEvent.DRAG_DROPPED, this.dragBoard, x, y, sx, sy, mode, null, null, null);
+            try {
+                node.getOnDragDropped().handle(event);
+            } catch (final Exception e) {
+                throw e;
+            }
+        }
     }
 
-    private void startDragAndDrop(final double d, final double f, final Node dragElement, final double sx, final double sy) {
-        final SynthDragBoard dragAndDrop = new SynthDragBoard();
-        dragAndDrop.getDataTransfer().put("sourceElement", dragElement);
-        try {
-            final MouseDragEvent pseudoDrag = new MouseDragEvent(dragAndDrop, null, null, d, f, sx, sy, MouseButton.PRIMARY, 1, false, false, false, false, false, false, false, false, false, null, null);
-            dragElement.getOnDragDetected().handle(pseudoDrag);
-        } catch (final Exception e) {
-            this.exception(e);
+    public static Node pick(Node node, double sceneX, double sceneY) {
+        Point2D p = node.sceneToLocal(sceneX, sceneY, true /* rootScene */);
+
+        // check if the given node has the point inside it, or else we drop out
+        if (!node.contains(p)) {
+            return null;
         }
-        if (!dragAndDrop.hasDragProxy()) {
-            final Node dragProxy = new Label("X");
-            dragProxy.minHeight(64);
-            dragProxy.minWidth(64);
-            dragAndDrop.setDragProxy(dragProxy);
+
+        // at this point we know that _at least_ the given node is a valid
+        // answer to the given point, so we will return that if we don't find
+        // a better child option
+        if (node instanceof Parent) {
+            // we iterate through all children in reverse order, and stop when we find a match.
+            // We do this as we know the elements at the end of the list have a higher
+            // z-order, and are therefore the better match, compared to children that
+            // might also intersect (but that would be underneath the element).
+            Node bestMatchingChild = null;
+            List<Node> children = ((Parent) node).getChildrenUnmodifiable();
+            for (int i = children.size() - 1; i >= 0; i--) {
+                Node child = children.get(i);
+                p = child.sceneToLocal(sceneX, sceneY, true /* rootScene */);
+                if (child.isVisible() && !child.isMouseTransparent() && child.contains(p)) {
+                    bestMatchingChild = child;
+                    break;
+                }
+            }
+
+            if (bestMatchingChild != null) {
+                return pick(bestMatchingChild, sceneX, sceneY);
+            }
         }
-        if (dragAndDrop.isAbort()) {
-            this.lastx = -1;
-            this.lasty = -1;
+
+        return node;
+    }
+    public static void forAllUnder(Node node, double sceneX, double sceneY, Consumer<Node> onUnder) {
+        Point2D p = node.sceneToLocal(sceneX, sceneY, true /* rootScene */);
+
+        // check if the given node has the point inside it, or else we drop out
+        if (!node.contains(p)) {
             return;
-        } else {
-            this.dragAndDrop = dragAndDrop;
-            this.glfxStage.getRootChildren().add(this.dragAndDrop.getDragProxy());
         }
-    }
 
-    private Node processDragEvents(final Node current, final int x, final int y, final int sx, final int sy) {
-        final Bounds bounds = current.localToScene(current.getBoundsInLocal());
-        if (bounds.contains(x, y)) {
-            if (current.getOnDragEntered() != null && !this.entered.contains(current)) {
-                this.entered.add(current);
-                final DragEvent event = new DragEvent(this.dragAndDrop, null, DragEvent.DRAG_ENTERED_TARGET, null, x, y, sx, sy, TransferMode.COPY, null, null, null);
-                try {
-                    current.getOnDragEntered().handle(event);
-                } catch (final Exception e) {
-                    this.exception(e);
+        // at this point we know that _at least_ the given node is a valid
+        // answer to the given point, so we will return that if we don't find
+        // a better child option
+        if (node instanceof Parent) {
+            // we iterate through all children in reverse order, and stop when we find a match.
+            // We do this as we know the elements at the end of the list have a higher
+            // z-order, and are therefore the better match, compared to children that
+            // might also intersect (but that would be underneath the element).
+            Node bestMatchingChild = null;
+            List<Node> children = ((Parent) node).getChildrenUnmodifiable();
+            for (int i = children.size() - 1; i >= 0; i--) {
+                Node child = children.get(i);
+                p = child.sceneToLocal(sceneX, sceneY, true /* rootScene */);
+                if (child.isVisible() && !child.isMouseTransparent() && child.contains(p)) {
+                    bestMatchingChild = child;
+                    break;
                 }
             }
-        } else if (this.entered.contains(current) && current.getOnDragExited() != null) {
-            this.entered.remove(current);
-            final DragEvent event = new DragEvent(this.dragAndDrop, null, DragEvent.DRAG_EXITED_TARGET, null, x, y, sx, sy, TransferMode.COPY, null, null, null);
-            try {
-                current.getOnDragExited().handle(event);
-            } catch (final Exception e) {
-                this.exception(e);
+
+            if (bestMatchingChild != null) {
+                onUnder.accept(bestMatchingChild);
+                forAllUnder(bestMatchingChild, sceneX, sceneY, onUnder);
             }
         }
-
-        if (current instanceof Parent) {
-            final Parent p = (Parent) current;
-            for (final Node child : p.getChildrenUnmodifiable()) {
-                this.processDragEvents(child, x, y, sx, sy);
-            }
-        }
-
-        return null;
     }
 
-    private Node getDragSourceAt(final Node current, final int x, final int y) {
-        if (current.getOnMouseDragged() != null) {
-            return current;
-        }
-        if (current.getOnDragDetected() != null) {
-            return current;
-        }
-
-        if (current instanceof Parent) {
-            final Parent p = (Parent) current;
-            for (int i = p.getChildrenUnmodifiable().size() - 1; i >= 0; i--) {
-                final Node child = p.getChildrenUnmodifiable().get(i);
-                final Bounds bounds = child.localToScene(child.getBoundsInLocal());
-                if (bounds.contains(x, y)) {
-                    final Node found = this.getDragSourceAt(child, x, y);
-                    return found;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private Node getDropTargetAt(final Node current, final int x, final int y) {
-        if (current.getOnDragDropped() != null) {
-            return current;
-        }
-
-        if (current instanceof Parent) {
-            final Parent p = (Parent) current;
-            for (int i = p.getChildrenUnmodifiable().size() - 1; i >= 0; i--) {
-                final Node child = p.getChildrenUnmodifiable().get(i);
-                final Bounds bounds = child.localToScene(child.getBoundsInLocal());
-                if (bounds.contains(x, y)) {
-                    final Node found = this.getDropTargetAt(child, x, y);
-                    return found;
-                }
-
-            }
-        }
-
-        return null;
-    }
 }

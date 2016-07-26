@@ -113,16 +113,11 @@ public class GLFXStage extends GLObject {
     private static final Marker JAVAFX_MARKER = MarkerFactory.getMarker("JAVAFX");
     private static final Logger LOGGER = LoggerFactory.getLogger(GLFXStage.class);
 
-    /**
-     * TODO: Show window with a dimmed color transform when unfocused (or expose
-     * color transforms)
-     *
-     */
     static {
         PlatformImpl.startup(() -> LOGGER.debug(JAVAFX_MARKER, "JavaFX initialized!"));
     }
 
-    private GLFXDNDHandler dndHandler = new GLFXDNDHandler(GLFXStage.this);
+    private GLFXDNDHandler dndHandler;
 
     private Replaceable<Function<GLVec2D, GLVec2D>> mouseTransform = new Replaceable<>(() -> {
         return (p) -> p;
@@ -299,9 +294,7 @@ public class GLFXStage extends GLObject {
             embeddedScene.setPixelScaleFactor(GLFXStage.this.scaleFactor);
             GLFXStage.this.emScene = embeddedScene;
 
-            embeddedScene.setDragStartListener((EmbeddedSceneDSInterface dragSource, TransferMode dragAction) -> {
-                // TODO???
-            });
+            dndHandler = new GLFXDNDHandler(emScene, GLFXStage.this);
         }
 
         @Override
@@ -1031,6 +1024,11 @@ public class GLFXStage extends GLObject {
                     leftButton, middleButton, rightButton,
                     mouseX, mouseY, mouseAbsX, mouseAbsY,
                     shift, ctrl, alt, meta, 0, false);
+
+            if(action == GLMouseButtonAction.RELEASED && button == 0){
+                dndHandler.mouseReleased(GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY);
+            }
+
         }
     }
 
@@ -1040,8 +1038,6 @@ public class GLFXStage extends GLObject {
         }
 
         MousePos mouse = transformMouse(x, y);
-
-
 
         GLFXStage.this.mouseX = (int) mouse.x;
         GLFXStage.this.mouseY = (int) mouse.y;
@@ -1074,7 +1070,7 @@ public class GLFXStage extends GLObject {
                     0, false);
         }
 
-        dndHandler.mouseUpdate(GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY, GLFXStage.this.leftButton);
+        dndHandler.mousePosition(GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY);
     }
 
     public void doMouseScrollEvent(double x, double y) {
