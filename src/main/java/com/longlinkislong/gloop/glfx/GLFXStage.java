@@ -53,7 +53,6 @@ import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
@@ -93,6 +92,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
+import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
@@ -616,7 +616,11 @@ public class GLFXStage extends GLObject {
 
             if (neededSize > 0) {
                 if (this.tBuffer == null || neededSize > this.tBuffer.capacity()) {
-                    this.tBuffer = ByteBuffer.allocateDirect(neededSize).order(ByteOrder.nativeOrder());
+                    if(this.tBuffer != null) {
+                        MemoryUtil.memFree(this.tBuffer);
+                    }
+
+                    this.tBuffer = MemoryUtil.memAlloc(neededSize);
                 }
 
                 this.tBuffer.rewind();

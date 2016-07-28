@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * An immutable definition of a c-struct composed of primitive objects.
@@ -122,7 +121,7 @@ public final class StructDef {
             final String name = e.getKey();
             final StructElementType type = e.getValue().type;
 
-            out.setAttribute(name, index);
+            out.setAttribute(name, index);            
             vao.attachBuffer(index, data, type.getVertexType(), type.getVertexSize(), this.stride, this.offset);
             index++;
         }
