@@ -209,7 +209,7 @@ public class GLAWTFont extends GLFont {
         pBuf.flip();
 
         return GLTask.join(
-                this.texture.new AllocateImage2DTask(1, GLTextureInternalFormat.GL_RGBA8, texWidth, texHeight),                
+                this.texture.new AllocateImage2DTask(1, GLTextureInternalFormat.GL_RGBA8, texWidth, texHeight, GLType.GL_UNSIGNED_BYTE),
                 this.texture.new UpdateImage2DTask(0, 0, 0, texWidth, texHeight, GL_BGRA, GLType.GL_UNSIGNED_BYTE, pBuf),
                 this.texture.new SetAttributesTask(new GLTextureParameters()
                         .withFilter(GLTextureMinFilter.GL_LINEAR, GLTextureMagFilter.GL_LINEAR)
