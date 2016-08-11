@@ -1,9 +1,9 @@
 #version 100
 
 #ifdef GL_FRAGMENT_PRECISION_HIGH
-    precision float highp;
+precision highp float;
 #else
-    precision float mediump;        
+precision mediump float;
 #endif
 
 attribute vec2 vPos;
