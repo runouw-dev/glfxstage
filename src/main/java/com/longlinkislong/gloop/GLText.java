@@ -135,9 +135,25 @@ public class GLText extends GLObject implements CharSequence {
         program.setName("GLText.defaultTextRenderer");
         program.setVertexAttributes(DEFAULT_ATTRIBUTES);
 
+        final String vertexShader;
+        final String fragmentShader;
+
+        switch(GLWindow.CLIENT_API) {
+            case OPENGLES:
+                vertexShader = "legacy_text.vert";
+                fragmentShader = "legacy_text.frag";
+                break;
+            case OPENGL:
+                vertexShader = "default_text.vsh";
+                fragmentShader = "default_text.fsh";
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported client api: " + GLWindow.CLIENT_API);
+        }
+
         try (
-                final InputStream inVsh = GLText.class.getResourceAsStream("default_text.vsh");
-                final InputStream inFsh = GLText.class.getResourceAsStream("default_text.fsh")) {
+                final InputStream inVsh = GLText.class.getResourceAsStream(vertexShader);
+                final InputStream inFsh = GLText.class.getResourceAsStream(fragmentShader)) {
 
             final GLShader vsh = new GLShader(GLShaderType.GL_VERTEX_SHADER, GLTools.readAll(inVsh));
             final GLShader fsh = new GLShader(GLShaderType.GL_FRAGMENT_SHADER, GLTools.readAll(inFsh));

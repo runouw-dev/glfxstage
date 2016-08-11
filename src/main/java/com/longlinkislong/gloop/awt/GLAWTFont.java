@@ -202,11 +202,9 @@ public class GLAWTFont extends GLFont {
         final int[] pixels = new int[texWidth * texHeight];
         final ByteBuffer pBuf = ByteBuffer.allocateDirect(texWidth * texHeight * 4).order(ByteOrder.nativeOrder());
 
-        img.getRGB(0, 0, texWidth, texHeight, pixels, 0, texWidth);
-
+        img.getRGB(0, 0, texWidth, texHeight, pixels, 0, texWidth);        
         Arrays.stream(pixels).forEach(pBuf::putInt);
-
-        pBuf.flip();
+        pBuf.flip();        
 
         return GLTask.join(
                 this.texture.new AllocateImage2DTask(1, GLTextureInternalFormat.GL_RGBA8, texWidth, texHeight, GLType.GL_UNSIGNED_BYTE),

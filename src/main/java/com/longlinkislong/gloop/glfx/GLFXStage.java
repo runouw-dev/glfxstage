@@ -31,13 +31,13 @@ import com.longlinkislong.gloop.GLTools;
 import com.longlinkislong.gloop.GLType;
 import com.longlinkislong.gloop.GLVec2D;
 import com.longlinkislong.gloop.GLVertexArray;
-import com.runouw.util.Lazy;
 import com.longlinkislong.gloop.GLVertexArray.DrawArraysTask;
 import com.longlinkislong.gloop.GLVertexAttributeSize;
 import com.longlinkislong.gloop.GLVertexAttributeType;
 import com.longlinkislong.gloop.GLVertexAttributes;
 import com.longlinkislong.gloop.GLViewport;
 import com.longlinkislong.gloop.GLWindow;
+import com.runouw.util.Lazy;
 import com.runouw.util.Replaceable;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.cursor.CursorFrame;
@@ -231,8 +231,25 @@ public class GLFXStage extends GLObject {
     }
 
     private static final Lazy<GLProgram> PROGRAM = new Lazy<>(() -> {
-        try (InputStream inVsh = GLFXStage.class.getResourceAsStream("fx.vs");
-                InputStream inFsh = GLFXStage.class.getResourceAsStream("fx.fs")) {
+
+        final String vertexShader;
+        final String fragmentShader;
+
+        switch (GLWindow.CLIENT_API) {
+            case OPENGLES:
+                vertexShader = "legacy_fx.vert";
+                fragmentShader = "legacy_fx.frag";
+                break;
+            case OPENGL:
+                vertexShader = "fx.vs";
+                fragmentShader = "fx.fs";
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported client api: " + GLWindow.CLIENT_API);
+        }
+
+        try (InputStream inVsh = GLFXStage.class.getResourceAsStream(vertexShader);
+                InputStream inFsh = GLFXStage.class.getResourceAsStream(fragmentShader)) {
             final String srcVsh = GLTools.readAll(inVsh);
             final String srcFsh = GLTools.readAll(inFsh);
 
