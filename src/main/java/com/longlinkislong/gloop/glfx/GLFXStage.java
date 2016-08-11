@@ -115,6 +115,7 @@ public class GLFXStage extends GLObject {
     }
 
     private GLFXDNDHandler dndHandler;
+    private GLFXContextMenuHandler contextMenuHandler;
 
     private Replaceable<Function<GLVec2D, GLVec2D>> mouseTransform = new Replaceable<>(() -> {
         return (p) -> p;
@@ -313,6 +314,7 @@ public class GLFXStage extends GLObject {
             GLFXStage.this.emScene = embeddedScene;
 
             dndHandler = new GLFXDNDHandler(emScene, GLFXStage.this);
+            contextMenuHandler = new GLFXContextMenuHandler(emScene, GLFXStage.this);
         }
 
         @Override
@@ -980,6 +982,8 @@ public class GLFXStage extends GLObject {
                     keyId = key; // yolo -\_0_0_/-
                 }
         }
+        // TODO:
+        // keyId = com.sun.glass.events.KeyEvent.VK_CONTEXT_MENU;
 
         GLFXStage.this.shift = modifiers.contains(GLKeyModifier.SHIFT);
         GLFXStage.this.alt = modifiers.contains(GLKeyModifier.ALT);
@@ -1004,6 +1008,14 @@ public class GLFXStage extends GLObject {
                             new char[]{}, mods);
                 }
                 break;
+        }
+
+        // window's shortcut to fire context menu
+        if(GLFXStage.this.shift && keyId == com.sun.glass.events.KeyEvent.VK_F10){
+            contextMenuHandler.fireContextMenuOnFocus();
+        }
+        if(keyId == com.sun.glass.events.KeyEvent.VK_CONTEXT_MENU){
+            contextMenuHandler.fireContextMenuOnFocus();
         }
 
     }
@@ -1058,6 +1070,9 @@ public class GLFXStage extends GLObject {
 
             if(action == GLMouseButtonAction.RELEASED && button == 0){
                 dndHandler.mouseReleased(GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY);
+            }
+            if(action == GLMouseButtonAction.RELEASED && button == 1){ // right click
+                contextMenuHandler.fireContextMenu(mouseX, mouseY, mouseAbsX, mouseAbsY);
             }
 
         }
