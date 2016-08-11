@@ -29,24 +29,35 @@ public class GLFXContextMenuHandler {
         this.glfxStage = glfxStage;
     }
 
-    public void fireContextMenu(double mouseX, double mouseY, double mouseAbsX, double mouseAbsY){
-        forAllUnder(glfxStage.getRootNode(), mouseX, mouseY, this::fireContextMenuEvent);
+    public void fireContextMenuFromMouse(double mouseX, double mouseY, double mouseAbsX, double mouseAbsY){
+        forAllUnder(glfxStage.getRootNode(), mouseX, mouseY, node -> fireContextMenuEventFromMouse(node, mouseX, mouseY, mouseAbsX, mouseAbsY));
+
+        /*
+        Node node = pickUnderMouse(glfxStage.getRootNode(), mouseX, mouseY);
+        if(node != null){
+            fireContextMenuEventFromMouse(node, mouseX, mouseY, mouseAbsX, mouseAbsY);
+        }
+        */
     }
-    public void fireContextMenuOnFocus(){
+    public void fireContextMenuFromKeyboard(){
         Node focusOwner = glfxStage.getScene().getFocusOwner();
         if(focusOwner != null){
-            fireContextMenuEvent(focusOwner);
+            fireContextMenuEventFromKeyboard(focusOwner);
         }
     }
 
-    public void fireContextMenuEvent(Node node){
+    public void fireContextMenuEventFromKeyboard(Node node){
         Bounds tabBounds = node.getBoundsInLocal();
         double centerX = tabBounds.getMinX() + tabBounds.getWidth()/2;
         double centerY = tabBounds.getMinY()+tabBounds.getHeight()/2;
         Point2D pos = node.localToScreen(centerX, centerY);
         double x = pos.getX();
         double y = pos.getY();
-        Event contextMenuEvent = new ContextMenuEvent(ContextMenuEvent.CONTEXT_MENU_REQUESTED, centerX, centerY, x, y, false, new PickResult(node, x, y));
+        Event contextMenuEvent = new ContextMenuEvent(ContextMenuEvent.CONTEXT_MENU_REQUESTED, centerX, centerY, x, y, true, new PickResult(node, x, y));
+        Event.fireEvent(node, contextMenuEvent);
+    }
+    public void fireContextMenuEventFromMouse(Node node, double x, double y, double screenX, double screenY){
+        Event contextMenuEvent = new ContextMenuEvent(ContextMenuEvent.CONTEXT_MENU_REQUESTED, x, y, screenX, screenY, false, new PickResult(node, x, y));
         Event.fireEvent(node, contextMenuEvent);
     }
 
@@ -82,6 +93,27 @@ public class GLFXContextMenuHandler {
                 forAllUnder(bestMatchingChild, sceneX, sceneY, onUnder);
             }
         }
+    }
+
+    private Node pickUnderMouse(final Node current, final double x, final double y) {
+        if (current.getOnDragDropped() != null) {
+            return current;
+        }
+
+        if (current instanceof Parent) {
+            final Parent p = (Parent) current;
+            for (int i = p.getChildrenUnmodifiable().size() - 1; i >= 0; i--) {
+                final Node child = p.getChildrenUnmodifiable().get(i);
+                final Bounds bounds = child.localToScene(child.getBoundsInLocal());
+                if (bounds.contains(x, y)) {
+                    final Node found = this.pickUnderMouse(child, x, y);
+                    return found;
+                }
+
+            }
+        }
+
+        return null;
     }
 
 }

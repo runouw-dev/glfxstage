@@ -974,6 +974,9 @@ public class GLFXStage extends GLObject {
             case GLFW_KEY_RIGHT_ALT:
                 keyId = com.sun.glass.events.KeyEvent.VK_ALT;
                 break;
+            case 348:
+                keyId = com.sun.glass.events.KeyEvent.VK_CONTEXT_MENU;
+                break;
             default:
                 if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
                     // F1 -> f12
@@ -1002,6 +1005,15 @@ public class GLFXStage extends GLObject {
                 break;
             case KEY_RELEASE:
                 if (keyId > -1) {
+
+                    // window's shortcut to fire context menu
+                    if(GLFXStage.this.shift && keyId == com.sun.glass.events.KeyEvent.VK_F10){
+                        contextMenuHandler.fireContextMenuFromKeyboard();
+                    }
+                    if(keyId == com.sun.glass.events.KeyEvent.VK_CONTEXT_MENU){
+                        contextMenuHandler.fireContextMenuFromKeyboard();
+                    }
+
                     GLFXStage.this.emScene.keyEvent(
                             AbstractEvents.KEYEVENT_RELEASED,
                             keyId,
@@ -1009,15 +1021,6 @@ public class GLFXStage extends GLObject {
                 }
                 break;
         }
-
-        // window's shortcut to fire context menu
-        if(GLFXStage.this.shift && keyId == com.sun.glass.events.KeyEvent.VK_F10){
-            contextMenuHandler.fireContextMenuOnFocus();
-        }
-        if(keyId == com.sun.glass.events.KeyEvent.VK_CONTEXT_MENU){
-            contextMenuHandler.fireContextMenuOnFocus();
-        }
-
     }
 
     public void doMouseButtonEvent(int button, GLMouseButtonAction action, Set<GLKeyModifier> set) {
@@ -1068,13 +1071,12 @@ public class GLFXStage extends GLObject {
                     mouseX, mouseY, mouseAbsX, mouseAbsY,
                     shift, ctrl, alt, meta, 0, false);
 
-            if(action == GLMouseButtonAction.RELEASED && button == 0){
+            if(button == 0){
                 dndHandler.mouseReleased(GLFXStage.this.mouseX, GLFXStage.this.mouseY, GLFXStage.this.mouseAbsX, GLFXStage.this.mouseAbsY);
             }
-            if(action == GLMouseButtonAction.RELEASED && button == 1){ // right click
-                contextMenuHandler.fireContextMenu(mouseX, mouseY, mouseAbsX, mouseAbsY);
+            if(button == 1){ // right click
+                contextMenuHandler.fireContextMenuFromMouse(mouseX, mouseY, mouseAbsX, mouseAbsY);
             }
-
         }
     }
 
