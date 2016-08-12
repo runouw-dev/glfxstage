@@ -8,6 +8,7 @@ package com.longlinkislong.gloop.glfx;
 import com.sun.javafx.embed.EmbeddedSceneInterface;
 import java.util.List;
 import java.util.function.Consumer;
+import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -40,21 +41,25 @@ public class GLFXContextMenuHandler {
         */
     }
     public void fireContextMenuFromKeyboard(){
-        Node focusOwner = glfxStage.getScene().getFocusOwner();
-        if(focusOwner != null){
-            fireContextMenuEventFromKeyboard(focusOwner);
-        }
+        Platform.runLater(() -> {
+            Node focusOwner = glfxStage.getScene().getFocusOwner();
+            if(focusOwner != null){
+                fireContextMenuEventFromKeyboard(focusOwner);
+            }
+        });
     }
 
     public void fireContextMenuEventFromKeyboard(Node node){
-        Bounds tabBounds = node.getBoundsInLocal();
-        double centerX = tabBounds.getMinX() + tabBounds.getWidth()/2;
-        double centerY = tabBounds.getMinY()+tabBounds.getHeight()/2;
-        Point2D pos = node.localToScreen(centerX, centerY);
-        double x = pos.getX();
-        double y = pos.getY();
-        Event contextMenuEvent = new ContextMenuEvent(ContextMenuEvent.CONTEXT_MENU_REQUESTED, centerX, centerY, x, y, true, new PickResult(node, x, y));
-        Event.fireEvent(node, contextMenuEvent);
+        Platform.runLater(() -> {
+            Bounds tabBounds = node.getBoundsInLocal();
+            double centerX = tabBounds.getMinX() + tabBounds.getWidth()/2;
+            double centerY = tabBounds.getMinY()+tabBounds.getHeight()/2;
+            Point2D pos = node.localToScreen(centerX, centerY);
+            double x = pos.getX();
+            double y = pos.getY();
+            Event contextMenuEvent = new ContextMenuEvent(ContextMenuEvent.CONTEXT_MENU_REQUESTED, centerX, centerY, x, y, true, new PickResult(node, x, y));
+            Event.fireEvent(node, contextMenuEvent);
+        });
     }
     public void fireContextMenuEventFromMouse(Node node, double x, double y, double screenX, double screenY){
         Event contextMenuEvent = new ContextMenuEvent(ContextMenuEvent.CONTEXT_MENU_REQUESTED, x, y, screenX, screenY, false, new PickResult(node, x, y));
