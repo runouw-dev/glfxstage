@@ -19,8 +19,8 @@ sourceCompatibility = '1.8'
 
 repositories {
     mavenCentral()
-    maven { url 'http://jartifacts.longlinkislong.com/libs-snapshot' }
-    maven { url 'http://jartifacts.longlinkislong.com/libs-release' }
+    maven { url 'http://jartifacts.longlinkislong.com/artifactory/libs-snapshot' }
+    maven { url 'http://jartifacts.longlinkislong.com/artifactory/libs-release' }
 }
 
 def getProjectVersion(projId) {
