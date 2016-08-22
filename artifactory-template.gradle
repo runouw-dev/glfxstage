@@ -5,10 +5,16 @@ if(!project.hasProperty('artifactoryUser') || !project.hasProperty('artifactoryP
         contextUrl = 'http://jartifacts.longlinkislong.com/artifactory'
         publish {
             repository {
-                repoKey = "libs-release-local"
+                if (build == 'snapshot') {
+                    repoKey = 'libs-snapshot-local'
+                } else if (build == 'release') {
+                    repoKey = 'libs-release-local'
+                } else {
+                    throw new IllegalStateException("Invalid build type: $build")
+                }
+                
                 username = "${artifactoryUser}"
-                password = "${artifactoryPassword}"
-                maven = true
+                password = "${artifactoryPassword}"                
             }
             defaults {
                 publications ('mavenJava')
@@ -38,17 +44,155 @@ publishing {
             groupId = "${group}"
             
             // get version number for outputting to artifactory
-            version = "${versionUrl}?name=${project.name}".toURL().text.trim()
+            if (build == 'snapshot') {
+                version = "${getHash()}-SNAPSHOT"          
+            } else if (build == 'release') {
+                version = getRelease(project.name)
+            } else {
+                throw new IllegalStateException("Unsupported build type: $build")
+            }
         }    
     }
 }
-task incrementBuild << {        
-    def version = "${versionUrl}?name=${project.name}&increment=1".toURL().text.trim()
+
+task versionIncrementBuild << {
+    def rawVersion = getRelease(project.name)
     
-    println "incremented build to $version"
+    if (rawVersion == null) {        
+        setVersion(0, 0, 0)
+    } else {        
+        def version = rawVersion.split('\\.')  
+        def major = version[0].toInteger()
+        def minor = version[1].toInteger()
+        def revision = version[2].toInteger()   
+        
+        setVersion(major, minor, revision + 1)               
+        
+        println "Version changed: $rawVersion -> $major.$minor.${revision + 1}"
+    }    
 }
 
-task version << {
-    def version = "${versionUrl}?name=${project.name}".toURL().text.trim()
-    println version
+task versionIncrementMajor << {
+    def rawVersion = getRelease(project.name)
+    
+    if (rawVersion == null) {
+        setVersion(1, 0, 0)
+    } else {
+        def version = rawVersion.split('\\.')  
+        def major = version[0].toInteger()          
+        
+        setVersion(major + 1, 0, 0)               
+        
+        println "Version changed: $rawVersion -> ${major+1}.0.0"
+    }
+}
+
+task versionIncrementMinor << {
+    def rawVersion = getRelease(project.name)
+    
+    if (rawVersion == null) {
+        setVersion(1, 0, 0)
+    } else {
+        def version = rawVersion.split('\\.')  
+        def major = version[0].toInteger()
+        def minor = version[1].toInteger()
+        
+        setVersion(major, minor + 1, 0)              
+        
+        println "Version changed: $rawVersion -> $major.${minor + 1}.0"
+    }
+}
+
+def setVersion(major, minor, revision) {    
+    def process = new ProcessBuilder('sqlite3', database, "REPLACE INTO versioning (library, hash, major, minor, revision) VALUES ('$project.name', '${getHash()}', $major, $minor, $revision)").redirectErrorStream(true).start()
+
+    process.inputStream.eachLine { println it }
+    
+    println "Set version to $major.$minor.$revision"
+}
+
+def getHash() {
+    'git rev-parse --short HEAD'.execute(null, projectDir).text.trim()
+}
+
+def getSnapshot(projectName) {
+    def result = new ProcessBuilder('sqlite3', database, "SELECT hash FROM versioning WHERE library='$projectName'").start().text.trim()
+    
+    return "$result-SNAPSHOT"
+}
+
+def getVersion(projectName) {
+    return getVersion(projectName, build)
+}
+
+def getVersion(projectName, buildType) {
+    if (isJenkins.toBoolean()) {
+        if (buildType == 'snapshot') {
+            return getSnapshot(projectName)
+        } else if (buildType == 'release') {
+            return getRelease(projectName)
+        } else {
+            throw new IllegalStateException("Unsupported build type: $buildType")
+        }
+    } else {
+        if (buildType == 'snapshot') {
+            return "http://jenkins.longlinkislong.com/job/$projectName/lastSuccessfulBuild/artifact/build/version.snapshot".toURL().text.trim()
+        } else if (buildType == 'release') {
+            return "http://jenkins.longlinkislong.com/job/$projectName/lastSuccessfulBuild/artifact/build/version.release".toURL().text.trim()
+        } else {
+            throw new IllegalArgumentException("Unsupported build type: $buildType")
+        }
+    }
+}
+
+def getRelease(projectName) {
+    def version = new ProcessBuilder('sqlite3', database, "SELECT major,minor,revision FROM versioning WHERE library='$projectName'").start().text.trim()
+    
+    if (version.empty) {
+        def dbFile = new File(database).absolutePath
+        System.err.println("Library [$projectName] was not found in database: $dbFile")
+        return null
+    } else {
+        return version.replace('|', '.')
+    }
+}
+
+task versionRelease << {    
+    def version = getRelease(project.name)
+    
+    if (version == null) {        
+        setVersion(0, 0, 0)
+        println "Version initialized to 0.0.0"
+    } else {
+        println "Current version: $version"
+    }
+}
+
+task versionSnapshot << {
+    "${'git rev-parse --short HEAD'.execute(null, projectDir).text}-SNAPSHOT"
+}
+
+task versionDump << {
+    if (isJenkins.toBoolean()) {
+        println 'I am Jenkins'
+    }
+    
+    def snapshot = new File("$projectDir/build/version.snapshot")
+    def release = new File("$projectDir/build/version.release")
+    
+    def revHash = getHash()
+    def snapshotVersion = "$revHash-SNAPSHOT"
+    def releaseVersion = getRelease(project.name)
+                                                
+    if (releaseVersion == null) {
+        setVersion(0, 0, 0)
+        releaseVersion = '0.0.0'
+    } else {
+        def process = new ProcessBuilder('sqlite3', database, "UPDATE versioning SET hash='$revHash' WHERE library='$project.name'").redirectErrorStream(true).start()
+        
+        process.inputStream.eachLine { println it }
+    }
+                                                
+    snapshot.write snapshotVersion
+    release.write releaseVersion
 }

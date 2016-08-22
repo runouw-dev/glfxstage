@@ -23,15 +23,53 @@ repositories {
     maven { url 'http://jartifacts.longlinkislong.com/artifactory/libs-release' }
 }
 
-def getProjectVersion(projId) {
-    return "${versionUrl}?name=${projId}".toURL().text.trim()
+def getSnapshot(projectName) {
+    def result = new ProcessBuilder('sqlite3', database, "SELECT hash FROM versioning WHERE library='$projectName'").start().text.trim()
+    
+    return "$result-SNAPSHOT"
+}
+
+def getVersion(projectName) {
+    return getVersion(projectName, build)
+}
+
+def getVersion(projectName, buildType) {
+    if (isJenkins.toBoolean()) {
+        if (buildType == 'snapshot') {
+            return getSnapshot(projectName)
+        } else if (buildType == 'release') {
+            return getRelease(projectName)
+        } else {
+            throw new IllegalStateException("Unsupported build type: $buildType")
+        }
+    } else {
+        if (buildType == 'snapshot') {
+            return "http://jenkins.longlinkislong.com/job/$projectName/lastSuccessfulBuild/artifact/build/version.snapshot".toURL().text.trim()
+        } else if (buildType == 'release') {
+            return "http://jenkins.longlinkislong.com/job/$projectName/lastSuccessfulBuild/artifact/build/version.release".toURL().text.trim()
+        } else {
+            throw new IllegalArgumentException("Unsupported build type: $buildType")
+        }
+    }
+}
+
+def getRelease(projectName) {
+    def version = new ProcessBuilder('sqlite3', database, "SELECT major,minor,revision FROM versioning WHERE library='$projectName'").start().text.trim()
+    
+    if (version.empty) {
+        def dbFile = new File(database).absolutePath
+        System.err.println("Library [$projectName] was not found in database: $dbFile")
+        return null
+    } else {
+        return version.replace('|', '.')
+    }
 }
 
 dependencies {        
     compile 'org.slf4j:slf4j-api:1.7.+'
-    compile "com.longlinkislong:gloop:${getProjectVersion('gloop')}"
-    compile "com.longlinkislong:gloop-window-glfw:${getProjectVersion('gloop-window-glfw')}"
-    compile "com.runouw:wrappers:${getProjectVersion('wrappers')}"
+    compile "com.longlinkislong:gloop:${getVersion('gloop')}"
+    compile "com.longlinkislong:gloop-window-glfw:${getVersion('gloop-window-glfw')}"
+    compile "com.runouw:wrappers:${getVersion('wrappers')}"
     testCompile 'junit:junit:4.10'    
 }
 
