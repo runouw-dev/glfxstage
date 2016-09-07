@@ -5,11 +5,12 @@
  */
 package com.longlinkislong.gloop;
 
+import com.runouw.util.Lazy;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -29,28 +30,50 @@ public class GLText extends GLObject implements CharSequence {
     private static final String DEFAULT_SAMPLER_UNAME = "uFont";
     private static final String DEFAULT_PROJECTION_UNAME = "uProj";
     private static final String DEFAULT_TRANSLATION_UNAME = "uTrans";
-    private static final GLVertexAttributes DEFAULT_ATTRIBUTES = new GLVertexAttributes();
+    private static final GLVertexAttributes ATTRIBS = new GLVertexAttributes();
 
     static {
-        DEFAULT_ATTRIBUTES.setAttribute("vPos", 0);
-        DEFAULT_ATTRIBUTES.setAttribute("vUVs", 1);
-        DEFAULT_ATTRIBUTES.setAttribute("vCol", 2);
+        ATTRIBS.setAttribute("vPos", 0);
+        ATTRIBS.setAttribute("vUVs", 1);
+        ATTRIBS.setAttribute("vCol", 2);
     }
 
     private String text;
     private final GLVec4D baseColor = GLColors.WHITE.getRGBA().asStaticVec();
-    private Optional<String> uSampler = Optional.empty();
-    private Optional<String> uProj = Optional.empty();
-    private Optional<String> uTrans = Optional.empty();
     private GLFont font;
 
-    private GLBuffer vPos;
-    private GLBuffer vCol;
-    private GLBuffer vUVs;
-    private GLVertexArray vao;
-    private Optional<GLProgram> program = Optional.empty();
-    private Optional<GLVertexAttributes> vAttribs = Optional.empty();
+    private final Lazy<GLBuffer> vPos = new Lazy<>(() -> new GLBuffer(this.getThread()));
+    private final Lazy<GLBuffer> vCol = new Lazy<>(() -> new GLBuffer(this.getThread()));
+    private final Lazy<GLBuffer> vUVs = new Lazy<>(() -> new GLBuffer(this.getThread()));
+    private final Lazy<GLVertexArray> vao = new Lazy<>(() -> {
+        final GLVertexArray out = new GLVertexArray(this.getThread());
+
+        out.attachBuffer(
+                ATTRIBS.getLocation("vPos"), vPos.get(),
+                GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2);
+
+        out.attachBuffer(
+        ATTRIBS.getLocation("vCol"), vCol.get(),
+                GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2);
+
+        out.attachBuffer(
+        ATTRIBS.getLocation("vUVs"), vUVs.get(),
+                GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2);
+       
+        return out;
+    });
     private int length;
+    private long lastUsedTime = 0L;
+
+    /**
+     * Returns the time since the object was last used (in nanoseconds).
+     *
+     * @return the time since last used.
+     * @since 16.09.05
+     */
+    public long getTimeSinceLastUsed() {
+        return System.nanoTime() - this.lastUsedTime;
+    }
 
     /**
      * Constructs a new GLText object from the supplied font and text.
@@ -76,42 +99,8 @@ public class GLText extends GLObject implements CharSequence {
 
         this.font = Objects.requireNonNull(font);
 
-        this.vPos = new GLBuffer(thread);
-        this.vPos.setName("GLText.vPos");
-        this.vCol = new GLBuffer(thread);
-        this.vCol.setName("GLText.vCol");
-        this.vUVs = new GLBuffer(thread);
-        this.vUVs.setName("GLText.vUVs");
-        this.vao = new GLVertexArray(thread);
-        this.vao.setName("GLText.vao");
-
         setText(seq.toString());
         LOGGER.trace("Constructed GLText object on thread: {}", thread);
-    }
-
-    /**
-     * Initializes the GLText object. This is called automatically by the
-     * constructor. A GLText object can be reinitialized if it has been deleted.
-     *
-     * @since 15.06.11
-     */
-    public final void init() {
-        this.newInitTask().glRun(this.getThread());
-    }
-
-    /**
-     * Constructs a new GLTask that initializes all of the internal GLObjects.
-     *
-     * @return the GLTask
-     * @since 15.06.12
-     */
-    public final GLTask newInitTask() {
-        return GLTask.join(
-                this.vao.new InitTask(),
-                this.vPos.new InitTask(),
-                this.vCol.new InitTask(),
-                this.vUVs.new InitTask(),
-                GLTask.create(() -> LOGGER.trace("GLText object initialized!")));
     }
 
     @Override
@@ -133,12 +122,12 @@ public class GLText extends GLObject implements CharSequence {
         final GLProgram program = new GLProgram();
 
         program.setName("GLText.defaultTextRenderer");
-        program.setVertexAttributes(DEFAULT_ATTRIBUTES);
+        program.setVertexAttributes(ATTRIBS);
 
         final String vertexShader;
         final String fragmentShader;
 
-        switch(GLWindow.CLIENT_API) {
+        switch (GLWindow.CLIENT_API) {
             case OPENGLES:
                 vertexShader = "legacy_text.vert";
                 fragmentShader = "legacy_text.frag";
@@ -188,7 +177,7 @@ public class GLText extends GLObject implements CharSequence {
     public void setText(final CharSequence seq) {
         this.newSetTextTask(seq).glRun(this.getThread());
     }
-    
+
     /**
      * Overwrites the text that the GLText object is displaying.
      *
@@ -212,12 +201,15 @@ public class GLText extends GLObject implements CharSequence {
     public GLTask newSetTextTask(final CharSequence seq) {
         this.text = seq.toString();
 
+        final int len = this.text.length();
+
         final GLVec2D offset = GLVec2D.create();
-        final Deque<GLVec4D> colorStack = new LinkedList<>();
-        final List<GLVec2> pos = new ArrayList<>();
-        final List<GLVec2> uvs = new ArrayList<>();
-        final List<GLVec4> col = new ArrayList<>();
+        final Deque<GLVec4D> colorStack = new ArrayDeque<>(4);
+        final List<GLVec2> pos = new ArrayList<>(len);
+        final List<GLVec2> uvs = new ArrayList<>(len);
+        final List<GLVec4> col = new ArrayList<>(len);
         final GLFontMetrics metrics = GLText.this.font.getMetrics();
+
         GLVec4D color = baseColor;
 
         for (int i = 0; i < text.length(); i++) {
@@ -308,8 +300,8 @@ public class GLText extends GLObject implements CharSequence {
                         default:
                             if (tag.toLowerCase().startsWith("color")) {
                                 final String colorCode = tag.split("=")[1];
-                                
-                                try{
+
+                                try {
                                     if (colorCode.startsWith("#") && (colorCode.length() == 4 || colorCode.length() == 5)) {
                                         // shorthand notation
                                         final int colorVal = Integer.decode(colorCode);
@@ -351,13 +343,13 @@ public class GLText extends GLObject implements CharSequence {
                                                 alpha / 255.0)
                                                 .asStaticVec();
                                     }
-                                }catch(NumberFormatException err){
+                                } catch (NumberFormatException err) {
                                     // text can be user input, so don't crash, instead print error
                                     LOGGER.error("Error decoding number in tag " + tag, err);
                                 }
 
                             }
-                        break;
+                            break;
                     }
 
                     i += tagSize;
@@ -423,65 +415,16 @@ public class GLText extends GLObject implements CharSequence {
             }
 
             offset.set(0, offset.x() + advance);
-        }
-
-        final GLVertexAttributes attribs = this.vAttribs.orElse(DEFAULT_ATTRIBUTES);
+        }        
 
         this.length = pos.size() / 6;
 
-        return GLTask.join(
-                this.vPos.new UploadTask(GLTools.wrapVec2F(pos), GLBufferUsage.GL_DYNAMIC_DRAW),
-                this.vCol.new UploadTask(GLTools.wrapVec4F(col), GLBufferUsage.GL_DYNAMIC_DRAW),
-                this.vUVs.new UploadTask(GLTools.wrapVec2F(uvs), GLBufferUsage.GL_DYNAMIC_DRAW),
-                this.vao.new AttachBufferTask(
-                        attribs.getLocation("vPos"), this.vPos,
-                        GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2),
-                this.vao.new AttachBufferTask(
-                        attribs.getLocation("vCol"), this.vCol,
-                        GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC4),
-                this.vao.new AttachBufferTask(
-                        attribs.getLocation("vUVs"), this.vUVs,
-                        GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2));
-    }
-
-    /**
-     * Replaces the text rendering OpenGL program used in this GLText object
-     * with another.
-     *
-     * @param program the OpenGL program to use
-     * @param attribs the vertex attributes and their locations.
-     * @param uProj the projection matrix uniform name.
-     * @param uTrans the transformation matrix uniform name.
-     * @param uName the font sampler uniform name.
-     * @since 15.06.11
-     */
-    public void overrideTextRenderer(
-            final GLProgram program,
-            final GLVertexAttributes attribs,
-            final CharSequence uProj, final CharSequence uTrans,
-            final CharSequence uName) {
-
-        LOGGER.trace("Replaced text renderer with [{}]! Old renderer: [{}].", this.program.orElse(getDefaultTextRenderer()).getName(), program != null ? program.getName() : getDefaultTextRenderer().getName());
-        this.program = Optional.ofNullable(program);
-        this.vAttribs = Optional.ofNullable(attribs);
-        this.uSampler = Optional.ofNullable(uName.toString());
-        this.uProj = Optional.ofNullable(uProj.toString());
-        this.uTrans = Optional.ofNullable(uTrans.toString());
-    }
-
-    /**
-     * Sets the text rendering OpenGL program used for this GLText object to the
-     * default.
-     *
-     * @since 15.06.11
-     */
-    public void restoreTextRenderer() {
-        LOGGER.trace("Replaced text renderer with default text renderer.");
-        this.program = Optional.empty();
-        this.vAttribs = Optional.empty();
-        this.uSampler = Optional.empty();
-        this.uProj = Optional.empty();
-        this.uTrans = Optional.empty();
+        return GLTask.create(() -> {
+            vPos.get().upload(GLTools.wrapVec2F(pos));
+            vCol.get().upload(GLTools.wrapVec4F(col));
+            vUVs.get().upload(GLTools.wrapVec2F(uvs));
+            this.lastUsedTime = System.nanoTime();
+        });
     }
 
     /**
@@ -551,24 +494,27 @@ public class GLText extends GLObject implements CharSequence {
             throw new GLException("Draw percent out of range! Draw percent must be on bounds [0.0,1.0]!");
         }
 
-        final GLProgram prog = this.program.orElseGet(GLText::getDefaultTextRenderer);
-        final String uFont = this.uSampler.orElse(GLText.DEFAULT_SAMPLER_UNAME);
-        final String uPr = this.uProj.orElse(GLText.DEFAULT_PROJECTION_UNAME);
-        final String uTr = this.uTrans.orElse(GLText.DEFAULT_TRANSLATION_UNAME);
+        final GLProgram prog = getDefaultTextRenderer();
+        final String uFont = DEFAULT_SAMPLER_UNAME;
+        final String uPr = DEFAULT_PROJECTION_UNAME;
+        final String uTr = DEFAULT_TRANSLATION_UNAME;
         final int verts = (int) (this.length * percent) * 6;
 
-        if(verts == 0){
+        if (verts == 0) {
             // NO-OP
-            return GLTask.create(() -> {});
-        }else{
-            return GLTask.join(
-                    this.font.newBindTask(target),
-                    prog.new SetUniformMatrixFTask(uPr, pr.asGLMat4F()),
-                    prog.new SetUniformMatrixFTask(uTr, tr.asGLMat4F()),
-                    prog.new SetUniformITask(uFont, target),
-                    prog.new UseTask(),
-                    this.vao.new DrawArraysTask(GLDrawMode.GL_TRIANGLES, 0, verts)
-            );
+            return GLTask.NO_OP;
+        } else {
+            return GLTask.create(() -> {
+                this.font.bind(target);
+
+                prog.use();
+                prog.setUniformMatrixF(uPr, pr.asGLMat4F());
+                prog.setUniformMatrixF(uTr, tr.asGLMat4F());
+                prog.setUniformI(uFont, target);
+
+                this.vao.get().drawArrays(GLDrawMode.GL_TRIANGLES, 0, verts);
+                this.lastUsedTime = System.nanoTime();
+            });
         }
     }
 
@@ -579,13 +525,7 @@ public class GLText extends GLObject implements CharSequence {
      * @since 15.06.11
      */
     public void delete() {
-        final GLTask deleteAll = GLTask.join(
-                this.vao.new DeleteTask(),
-                this.vPos.new DeleteTask(),
-                this.vCol.new DeleteTask(),
-                this.vUVs.new DeleteTask());
-
-        deleteAll.glRun(this.getThread());
+        newDeleteTask().glRun(this.getThread());
     }
 
     /**
@@ -595,12 +535,14 @@ public class GLText extends GLObject implements CharSequence {
      * @since 15.06.11
      */
     public GLTask newDeleteTask() {
-        return GLTask.join(
-                this.vao.new DeleteTask(),
-                this.vPos.new DeleteTask(),
-                this.vCol.new DeleteTask(),
-                this.vUVs.new DeleteTask(),
-                GLTask.create(() -> LOGGER.trace("Deleting GLText object!")));
+        return GLTask.create(() -> {
+            this.vao.get().delete();
+            this.vPos.get().delete();
+            this.vCol.get().delete();
+            this.vUVs.get().delete();
+            LOGGER.trace("Deleting GLText object!");
+            this.lastUsedTime = 0L;
+        });
     }
 
     @Override
