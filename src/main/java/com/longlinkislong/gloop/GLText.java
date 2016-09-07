@@ -74,7 +74,7 @@ public class GLText extends GLObject implements CharSequence {
 
         out.attachBuffer(
         ATTRIBS.getLocation("vCol"), vCol.get(),
-                GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC2);
+                GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC4);
 
         out.attachBuffer(
         ATTRIBS.getLocation("vUVs"), vUVs.get(),
