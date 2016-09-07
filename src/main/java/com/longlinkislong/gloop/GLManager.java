@@ -168,11 +168,16 @@ public final class GLManager {
      * Constructs a managed GLProgram out of an array of managed GLShaders.
      *
      * @param thread the OpenGL thread to create the GLProgram on.
+     * @param attribs vertex attributes
      * @param managedShaders the array of shaders.
      * @return the managed GLProgram.
      * @since 16.09.06
      */
-    public ManagedReference<GLProgram> newManagedProgram(final GLThread thread, final ManagedReference<GLShader>... managedShaders) {
+    public ManagedReference<GLProgram> newManagedProgram(
+            final GLThread thread,
+            final GLVertexAttributes attribs,
+            final ManagedReference<GLShader>... managedShaders) {
+
         final Supplier<GLProgram> init = () -> {
             final GLProgram out = new GLProgram(thread);
             final GLShader[] shaders = new GLShader[managedShaders.length];
@@ -183,6 +188,7 @@ public final class GLManager {
                     .collect(Collectors.toList())
                     .toArray(shaders);
 
+            out.setVertexAttributes(attribs);
             out.linkShaders(shaders, 0, shaders.length);
 
             return out;
