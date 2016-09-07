@@ -26,8 +26,6 @@
 package com.longlinkislong.gloop;
 
 import static com.longlinkislong.gloop.GLFramebufferMode.GL_COLOR_BUFFER_BIT;
-import static com.longlinkislong.gloop.GLFramebufferMode.GL_DEPTH_BUFFER_BIT;
-import static com.longlinkislong.gloop.GLFramebufferMode.GL_STENCIL_BUFFER_BIT;
 import com.runouw.util.Lazy;
 import java.awt.image.BufferedImage;
 import java.util.EnumSet;
@@ -74,6 +72,7 @@ public final class IndirectSurface {
     private final Lazy<GLRenderbuffer> depthStencil;
     private final Lazy<GLFramebuffer> framebuffer;
     private GLClear clear;
+    private final GLViewport viewport;
 
     /**
      * The default color format used for the color renderbuffer. Evaluates as
@@ -139,6 +138,9 @@ public final class IndirectSurface {
                 .withClearBits(GLFramebufferMode.GL_COLOR_BUFFER_BIT, GLFramebufferMode.GL_DEPTH_BUFFER_BIT, GLFramebufferMode.GL_STENCIL_BUFFER_BIT)
                 .withClearColor(0f, 0f, 0f, 1f)
                 .withClearDepth(1.0);
+
+        this.viewport = new GLViewport(0, 0, width, height);
+
     }
 
     /**
@@ -178,6 +180,8 @@ public final class IndirectSurface {
                 .withClearBits(GLFramebufferMode.GL_COLOR_BUFFER_BIT, GLFramebufferMode.GL_DEPTH_BUFFER_BIT, GLFramebufferMode.GL_STENCIL_BUFFER_BIT)
                 .withClearColor(0f, 0f, 0f, 1f)
                 .withClearDepth(1.0);
+
+        this.viewport = new GLViewport(thread, 0, 0, width, height);
     }
 
     /**
@@ -226,10 +230,15 @@ public final class IndirectSurface {
      * @since 16.09.06
      */
     public void bind() {
-        this.framebuffer.get().getThread().pushFramebufferBind();
-        this.framebuffer.get().bind();
-        this.clear.clear();
+        final GLFramebuffer fb = this.framebuffer.get();
+        final GLThread thread = fb.getThread();
 
+        thread.pushFramebufferBind();
+        thread.pushViewport();
+
+        fb.bind();
+        viewport.applyViewport();
+        clear.clear();
     }
 
     /**
@@ -238,13 +247,15 @@ public final class IndirectSurface {
      * @since 16.09.06
      */
     public void unbind() {
-        this.framebuffer.get().getThread().popFramebufferBind();
+        final GLThread thread = this.framebuffer.get().getThread();
+
+        thread.popViewport();
+        thread.popFramebufferBind();
     }
 
     /**
-     * Blits the IndirectSurface to a Framebuffer. The color and depth-stencil
-     * renderbuffers will be copied. The surface will be scaled using Linear
-     * interpolation.
+     * Blits the IndirectSurface to a Framebuffer. Only the color renderbuffer
+     * will be copied. The surface will be scaled using NEAREST interpolation.
      *
      * @param dst the Framebuffer to copy to.
      * @param dstX0 x0 of the destination rectangle.
@@ -253,14 +264,62 @@ public final class IndirectSurface {
      * @param dstY1 y1 of the destination rectangle.
      * @since 16.09.06
      */
-    public void blit(final GLFramebuffer dst, final int dstX0, final int dstY0, final int dstX1, final int dstY1) {
-        blit(dst, 0, 0, this.width, this.height, dstX0, dstY0, dstX1, dstY1);
+    public void blit(
+            final GLFramebuffer dst,
+            final int dstX0, final int dstY0,
+            final int dstX1, final int dstY1) {
+
+        blit(
+                dst,
+                0, 0, this.width, this.height,
+                dstX0, dstY0, dstX1, dstY1);
     }
 
     /**
-     * Blits the IndirectSurface to a Framebuffer. The color and depth-stencil
-     * renderbuffers will be copied. The surface will be scaled using Linear
-     * interpolation
+     * Blits the IndirectSurface to a Framebuffer. The surface will be scaled
+     * using NEAREST interpolation.
+     *
+     * @param dst the Framebuffer to copy to.
+     * @param dstX0 x0 of the destination rectangle.
+     * @param dstY0 y0 of the destination rectangle.
+     * @param dstX1 x1 of the destination rectangle.
+     * @param dstY1 y1 of the destination rectangle.
+     * @param mask the renderbuffers to select.
+     * @since 16.09.06
+     */
+    public void blit(
+            final GLFramebuffer dst,
+            final int dstX0, final int dstY0,
+            final int dstX1, final int dstY1,
+            final Set<GLFramebufferMode> mask) {
+
+        blit(dst, 0, 0, this.width, this.height, dstX0, dstY0, dstX1, dstY1, mask, GLTextureMagFilter.GL_NEAREST);
+    }
+
+    /**
+     * Blits the IndirectSurface to a Framebuffer.
+     * @param dst the Framebuffer to copy to.
+     * @param dstX0 x0 of the destination rectangle.
+     * @param dstY0 y0 of the destination rectangle.
+     * @param dstX1 x1 of the destination rectangle.
+     * @param dstY1 y1 of the destination rectangle.
+     * @param mask the renderbuffers to copy.
+     * @param filter the scaling mode.
+     * @since 16.09.06
+     */
+    public void blit(
+            final GLFramebuffer dst,
+            final int dstX0, final int dstY0,
+            final int dstX1, final int dstY1,
+            final Set<GLFramebufferMode> mask,
+            final GLTextureMagFilter filter) {
+
+        blit(dst, 0, 0, this.width, this.height, dstX0, dstY0, dstX1, dstY1, mask, filter);
+    }
+
+    /**
+     * Blits the IndirectSurface to a Framebuffer. Only the color renderbuffer
+     * will be copied. The surface will be scaled using NEAREST interpolation
      *
      * @param dst the Framebuffer to copy to.
      * @param srcX0 x0 of the copy rectangle.
@@ -277,12 +336,12 @@ public final class IndirectSurface {
             final int srcX0, final int srcY0, final int srcX1, final int srcY1,
             final int dstX0, final int dstY0, final int dstX1, final int dstY1) {
 
-        blit(dst, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, EnumSet.of(GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT));
+        blit(dst, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, EnumSet.of(GL_COLOR_BUFFER_BIT));
     }
 
     /**
      * Blits the IndirectSurface to a Framebuffer. The surface will be scaled
-     * using Linear interpolation
+     * using NEAREST interpolation
      *
      * @param dst the Framebuffer to copy to.
      * @param srcX0 x0 of the copy rectangle.

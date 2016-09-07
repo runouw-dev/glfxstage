@@ -70,7 +70,11 @@ dependencies {
     compile "com.longlinkislong:gloop:${getVersion('gloop')}"
     compile "com.longlinkislong:gloop-window-glfw:${getVersion('gloop-window-glfw')}"
     compile "com.runouw:wrappers:${getVersion('wrappers')}"
-    testCompile 'junit:junit:4.10'    
+    
+    testCompile 'junit:junit:4.10'
+    testCompile 'org.slf4j:slf4j-simple:1.7.+'
+    testCompile "com.longlinkislong:gloop-window-glfw:${getVersion('gloop-window-glfw')}"
+    testCompile "com.longlinkislong:gloop-impl-opengl:${getVersion('gloop-impl-opengl')}"
 }
 
 compileJava.options.compilerArgs = ['-Xlint:all']
