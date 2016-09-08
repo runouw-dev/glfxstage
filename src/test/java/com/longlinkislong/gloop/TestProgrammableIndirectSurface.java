@@ -5,15 +5,16 @@
  */
 package com.longlinkislong.gloop;
 
+import static com.longlinkislong.gloop.ProgrammableIndirectSurface.BICUBIC_SHADER;
 import java.io.IOException;
-import java.util.EnumSet;
 import org.junit.Test;
 
 /**
  *
  * @author zmichaels
  */
-public class TestIndirectSurface {
+public class TestProgrammableIndirectSurface {
+
     static {
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
     }
@@ -22,19 +23,17 @@ public class TestIndirectSurface {
     public void test() {
         new TestFramework("NeHe 02", this::init, this::redraw)
                 .showWindow()
-                .runFor(2000);
+                .runFor(5000);
     }
-
-    private final IndirectSurface surface = new IndirectSurface(320, 240);
 
     private final GLClear clear = new GLClear()
             .withClearBits(GLFramebufferMode.GL_COLOR_BUFFER_BIT, GLFramebufferMode.GL_DEPTH_BUFFER_BIT)
-            .withClearColor(1, 0, 0, 1)
+            .withClearColor(0, 0, 0, 1)
             .withClearDepth(1.0);
 
     private final GLDepthTest depthTest = new GLDepthTest()
-                .withEnabled(GLEnableStatus.GL_ENABLED)
-                .withDepthFunc(GLDepthFunc.GL_LEQUAL);
+            .withEnabled(GLEnableStatus.GL_ENABLED)
+            .withDepthFunc(GLDepthFunc.GL_LEQUAL);
 
     private GLBuffer vTriangle;
     private GLBuffer vSquare;
@@ -45,6 +44,10 @@ public class TestIndirectSurface {
     private GLVertexAttributes attribs;
 
     private GLProgram simpleProgram;
+
+    private final ProgrammableIndirectSurface surface = new ProgrammableIndirectSurface(
+            BICUBIC_SHADER, 320, 240,
+            GLTextureInternalFormat.GL_RGBA8, GLTextureInternalFormat.GL_DEPTH24_STENCIL8);
 
     private void init() {
         final GLThread thread = GLThread.getCurrent()
@@ -76,14 +79,16 @@ public class TestIndirectSurface {
                         1f, -1f, 0f));
 
         vSquare.upload(GLTools.wrapFloat(
-                    -1f, 1f, 0f,
-                    -1f, -1f, 0f,
-                    1f, 1f, 0f,
-                    1f, -1f, 0f));
+                        -1f, 1f, 0f,
+                        -1f, -1f, 0f,
+                        1f, 1f, 0f,
+                        1f, -1f, 0f));
 
         vaoTriangle.attachBuffer(0, vTriangle, GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC3);
         vaoSquare.attachBuffer(0, vSquare, GLVertexAttributeType.GL_FLOAT, GLVertexAttributeSize.VEC3);
     }
+
+    float t = 0;
 
     private void redraw() {        
         final GLMat4F p = GLMat4F.perspective(45.0f, 1.0f, 0.1f, 100.0f);
@@ -108,7 +113,8 @@ public class TestIndirectSurface {
         surface.unbind();
         clear.clear();
 
-        surface.blit(GLFramebuffer.getDefaultFramebuffer(), 0, 0, 640, 480, EnumSet.of(GLFramebufferMode.GL_COLOR_BUFFER_BIT), GLTextureMagFilter.GL_LINEAR);
+        surface.blit();
+
         TestFramework.assertNoGLError();
     }
 }
