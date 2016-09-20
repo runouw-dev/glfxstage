@@ -92,6 +92,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
+import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_DELETE;
@@ -103,10 +104,13 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_F1;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_F25;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_HOME;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_INSERT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_KP_0;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_KP_9;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_NUM_LOCK;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_DOWN;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAGE_UP;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_PAUSE;
@@ -115,6 +119,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_ALT;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_SCROLL_LOCK;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_TAB;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UP;
 import org.lwjgl.system.MemoryUtil;
@@ -999,12 +1004,21 @@ public class GLFXStage extends GLObject {
             case GLFW_KEY_RIGHT_ALT:
                 keyId = com.sun.glass.events.KeyEvent.VK_ALT;
                 break;
+            case GLFW_KEY_NUM_LOCK:
+                keyId = com.sun.glass.events.KeyEvent.VK_NUM_LOCK;
+                break;
+            case GLFW_KEY_SCROLL_LOCK:
+                keyId = com.sun.glass.events.KeyEvent.VK_SCROLL_LOCK;
+                break;
             case 348:
                 keyId = com.sun.glass.events.KeyEvent.VK_CONTEXT_MENU;
                 break;
             default:
-                if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
-                    // F1 -> f12
+                if (key >= GLFW_KEY_KP_0 && key <= GLFW_KEY_KP_9) {
+                    // numpad keys
+                    keyId = com.sun.glass.events.KeyEvent.VK_NUMPAD0 + (key - GLFW_KEY_KP_0);
+                }else if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25) {
+                    // F1 -> F25
                     keyId = com.sun.glass.events.KeyEvent.VK_F1 + (key - GLFW_KEY_F1);
                 }else if (key > 0) {
                     keyId = key; // yolo -\_0_0_/-
