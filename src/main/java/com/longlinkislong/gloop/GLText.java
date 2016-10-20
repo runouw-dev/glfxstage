@@ -440,9 +440,15 @@ public class GLText extends GLObject implements CharSequence {
         this.length = pos.size() / 6;
 
         return GLTask.create(() -> {
+            vPos.get().invalidate();
             vPos.get().upload(GLTools.wrapVec2F(pos));
+            
+            vCol.get().invalidate();
             vCol.get().upload(GLTools.wrapVec4F(col));
+            
+            vUVs.get().invalidate();
             vUVs.get().upload(GLTools.wrapVec2F(uvs));
+            
             this.updateTimeUsed();
         });
     }

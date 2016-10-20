@@ -81,7 +81,9 @@ public final class GLManager {
                 obj.instance = null;
             } else {
                 // reschedule the check if it is still alive...
-                glgc.schedule(() -> check(obj), OBJ_TIMEOUT, OBJ_TIMEOUT_UNITS);
+                final Runnable nextCheck = () -> this.check(obj);
+                
+                glgc.schedule(nextCheck, OBJ_TIMEOUT, OBJ_TIMEOUT_UNITS);
             }
         }
     }
@@ -402,7 +404,9 @@ public final class GLManager {
             this.timeoutCheck = Objects.requireNonNull(timeoutCheck);
             this.cleanup = Objects.requireNonNull(cleanup);
 
-            glgc.schedule(() -> check(this), OBJ_TIMEOUT, OBJ_TIMEOUT_UNITS);
+            final Runnable nextCheck = () -> check(this);
+            
+            glgc.schedule(nextCheck, OBJ_TIMEOUT, OBJ_TIMEOUT_UNITS);
             GLManager.this.managedObjs.add(this.instance);
         }
 
@@ -429,7 +433,10 @@ public final class GLManager {
                     if (newInstance != null) {
                         this.instance = new WeakReference<>(theInstance);
                         // reschedule a gc check since the object was refreshed.
-                        glgc.schedule(() -> check(this), OBJ_TIMEOUT, OBJ_TIMEOUT_UNITS);
+                        
+                        final Runnable nextCheck = () -> check(this);
+                        
+                        glgc.schedule(nextCheck, OBJ_TIMEOUT, OBJ_TIMEOUT_UNITS);
                     } else {
                         this.keepManaged = false;
                     }
