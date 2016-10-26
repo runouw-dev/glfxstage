@@ -439,11 +439,7 @@ public class GLText extends GLObject implements CharSequence {
 
         this.length = pos.size() / 6;
 
-        return GLTask.create(() -> {
-            vPos.ifInitialized(GLBuffer::invalidate);
-            vCol.ifInitialized(GLBuffer::invalidate);
-            vUVs.ifInitialized(GLBuffer::invalidate);
-            
+        return GLTask.create(() -> {            
             vPos.get().upload(GLTools.wrapVec2F(pos), GLBufferUsage.GL_DYNAMIC_DRAW);
             vCol.get().upload(GLTools.wrapVec4F(col), GLBufferUsage.GL_DYNAMIC_DRAW);                        
             vUVs.get().upload(GLTools.wrapVec2F(uvs), GLBufferUsage.GL_DYNAMIC_DRAW);

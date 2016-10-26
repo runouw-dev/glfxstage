@@ -19,7 +19,7 @@ public class TestProgrammableIndirectSurface {
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
     }
 
-    @Test
+    //@Test
     public void test() {
         new TestFramework("NeHe 02", this::init, this::redraw)
                 .showWindow()

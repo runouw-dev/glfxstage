@@ -20,7 +20,7 @@ sourceCompatibility = '1.8'
 repositories {
     mavenCentral()
     maven { url 'http://jartifacts.longlinkislong.com/artifactory/libs-snapshot' }
-    maven { url 'http://jartifacts.longlinkislong.com/artifactory/libs-release' }
+    maven { url 'http://jartifacts.longlinkislong.com/artifactory/libs-release' }    
 }
 
 def getSnapshot(projectName) {
@@ -71,6 +71,8 @@ dependencies {
     compile "com.longlinkislong:gloop-window-glfw:${getVersion('gloop-window-glfw')}"
     compile "com.runouw:wrappers:${getVersion('wrappers')}"
     
+    
+    compile files("${System.properties['java.home']}/../lib/tools.jar")
     testCompile 'junit:junit:4.10'
     testCompile 'org.slf4j:slf4j-simple:1.7.+'
     testCompile "com.longlinkislong:gloop-window-glfw:${getVersion('gloop-window-glfw')}"
