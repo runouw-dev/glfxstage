@@ -27,7 +27,7 @@ package com.longlinkislong.gloop.awt;
 
 import com.longlinkislong.gloop.GLException;
 import com.longlinkislong.gloop.GLFont;
-import com.longlinkislong.gloop.GLFontGlpyhSet;
+import com.longlinkislong.gloop.GLFontGlyphSet;
 import com.longlinkislong.gloop.GLFontMetrics;
 import com.longlinkislong.gloop.GLTask;
 import static com.longlinkislong.gloop.GLTextureFormat.GL_BGRA;
@@ -81,7 +81,7 @@ public class GLAWTFont extends GLFont {
      * @since 15.06.11
      */
     public GLAWTFont(final Font font) {
-        this(GLThread.getDefaultInstance(), font, GLFontGlpyhSet.DEFAULT_GLYPH_SET);
+        this(GLThread.getDefaultInstance(), font, GLFontGlyphSet.ASCII);
     }
 
     /**
@@ -93,7 +93,7 @@ public class GLAWTFont extends GLFont {
      * @since 15.06.11
      */
     public GLAWTFont(final GLThread thread, final Font font) {
-        super(thread, GLFontGlpyhSet.DEFAULT_GLYPH_SET);
+        super(thread, GLFontGlyphSet.ASCII);
 
         this.font = Objects.requireNonNull(font);
         this.init();
@@ -107,7 +107,7 @@ public class GLAWTFont extends GLFont {
      * @param supportedGlyphs the set of supported glyphs
      * @since 15.06.11
      */
-    public GLAWTFont(final Font font, final GLFontGlpyhSet supportedGlyphs) {
+    public GLAWTFont(final Font font, final GLFontGlyphSet supportedGlyphs) {
         this(GLThread.getDefaultInstance(), font, supportedGlyphs);
     }
 
@@ -120,7 +120,7 @@ public class GLAWTFont extends GLFont {
      * @param supportedGlyphs the set of supported glyphs
      * @since 15.06.11
      */
-    public GLAWTFont(final GLThread thread, final Font font, final GLFontGlpyhSet supportedGlyphs) {
+    public GLAWTFont(final GLThread thread, final Font font, final GLFontGlyphSet supportedGlyphs) {
         super(thread, supportedGlyphs);
 
         this.font = Objects.requireNonNull(font);
@@ -248,7 +248,7 @@ public class GLAWTFont extends GLFont {
      * @return the associated metrics object.
      * @since 15.06.11
      */
-    public static GLFontMetrics getFontMetrics(final Font font, final GLFontGlpyhSet glyps) {
+    public static GLFontMetrics getFontMetrics(final Font font, final GLFontGlyphSet glyps) {
         if (METRICS_MAP.containsKey(font)) {
             return METRICS_MAP.get(font);
         } else {

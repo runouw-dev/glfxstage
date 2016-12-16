@@ -25,7 +25,7 @@
  */
 package com.longlinkislong.gloop.awt;
 
-import com.longlinkislong.gloop.GLFontGlpyhSet;
+import com.longlinkislong.gloop.GLFontGlyphSet;
 import com.longlinkislong.gloop.GLFontMetrics;
 import java.awt.Canvas;
 import java.awt.Font;
@@ -44,7 +44,7 @@ import java.util.Objects;
 public class GLAWTFontMetrics implements GLFontMetrics {
 
     private final Font font;
-    private final GLFontGlpyhSet supportedGlyphs;
+    private final GLFontGlyphSet supportedGlyphs;
     private final int texWidth;
     private final int texHeight;
     private final int sqr;
@@ -61,7 +61,7 @@ public class GLAWTFontMetrics implements GLFontMetrics {
      * @param supportedGlyphs the set of supported glyphs.
      * @since 15.06.11
      */
-    public GLAWTFontMetrics(final Font font, final GLFontGlpyhSet supportedGlyphs) {
+    public GLAWTFontMetrics(final Font font, final GLFontGlyphSet supportedGlyphs) {
         this.font = Objects.requireNonNull(font);
         this.supportedGlyphs = supportedGlyphs;
         
@@ -120,8 +120,9 @@ public class GLAWTFontMetrics implements GLFontMetrics {
     }
 
     @Override
-    public float getU0(char c) {
-        final float left = ((supportedGlyphs.indexOf(c)) % sqr) * getLineHeight();
+    public float getU0(char c) {                
+        final int index = supportedGlyphs.indexOf(c).orElseGet(() -> supportedGlyphs.indexOf('!').orElse(0));
+        final float left = (index % sqr) * getLineHeight();
         
         return left / texWidth;
     }
@@ -133,7 +134,8 @@ public class GLAWTFontMetrics implements GLFontMetrics {
 
     @Override
     public float getV0(char c) {
-        final float top = ((supportedGlyphs.indexOf(c)) / sqr) * getLineHeight();
+        final int index = supportedGlyphs.indexOf('!').orElseGet(() -> supportedGlyphs.indexOf('!').orElse(0));
+        final float top = (index / sqr) * getLineHeight();
         
         return top / texHeight;
     }

@@ -25,6 +25,8 @@
  */
 package com.longlinkislong.gloop;
 
+import java.util.Objects;
+
 /**
  * An OpenGL object that represents a font as a texture-like object. This is the
  * skeleton object for a font used by GLText. The actual implementation (init
@@ -34,7 +36,7 @@ package com.longlinkislong.gloop;
  * @since 15.06.11
  */
 public abstract class GLFont extends GLObject {
-    protected final GLFontGlpyhSet supportedGlyphs;
+    protected final GLFontGlyphSet supportedGlyphs;
     
     /**
      * The underlying OpenGL texture object. This object should be reinitialized
@@ -51,7 +53,7 @@ public abstract class GLFont extends GLObject {
      * @since 15.07.01
      */
     public GLFont() {
-        this(GLThread.getDefaultInstance(), GLFontGlpyhSet.DEFAULT_GLYPH_SET);
+        this(GLThread.getDefaultInstance());
     }
 
     /**
@@ -61,7 +63,7 @@ public abstract class GLFont extends GLObject {
      * @since 15.07.01
      */
     public GLFont(final GLThread thread) {
-        this(thread, GLFontGlpyhSet.DEFAULT_GLYPH_SET);
+        this(thread, GLFontGlyphSet.ASCII);
     }
     
     /**
@@ -71,11 +73,11 @@ public abstract class GLFont extends GLObject {
      * @param supportedGlyphs the set of glyphs supported.
      * @since 15.07.01
      */
-    public GLFont(final GLThread thread, final GLFontGlpyhSet supportedGlyphs) {
+    public GLFont(final GLThread thread, final GLFontGlyphSet supportedGlyphs) {
         super(thread);
         
         this.texture = new GLTexture(thread);
-        this.supportedGlyphs = supportedGlyphs.asUnmodifiable();
+        this.supportedGlyphs = Objects.requireNonNull(supportedGlyphs);
     }
 
     /**
@@ -142,7 +144,7 @@ public abstract class GLFont extends GLObject {
      */
     public abstract GLFontMetrics getMetrics();
 
-    public GLFontGlpyhSet getSupportedGlyphs() {
+    public GLFontGlyphSet getSupportedGlyphs() {
         return supportedGlyphs;
     }
 
