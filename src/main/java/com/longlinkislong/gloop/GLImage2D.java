@@ -25,18 +25,13 @@
  */
 package com.longlinkislong.gloop;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.nio.channels.FileChannel.MapMode;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * The GLImage2D class provides a simple 2D image container intended for use as
@@ -48,12 +43,10 @@ import java.util.Optional;
  * @author zmichaels
  * @since 15.02.02
  */
-public class GLImage2D implements Closeable {
-
-    private static int[] TEMP = null;    
+public class GLImage2D {
+    
     protected final ByteBuffer data;
-    private final int[] size;
-    private Optional<Closeable> resource = Optional.empty();
+    private final int[] size;    
 
     /**
      * Constructs a new GLImage with the specified width and height.
@@ -78,26 +71,14 @@ public class GLImage2D implements Closeable {
     public GLImage2D(final int width, final int height, final ByteBuffer data) {
         this.size = new int[]{width, height};
         this.data = data;
-    }
-
-    /**
-     * Opens a RandomAccessFile as a GLImage2D. The entire file is then memory
-     * mapped.
-     *
-     * @param width the width of the image
-     * @param height the height of the image
-     * @param data the image file
-     * @param mode the mode to open the image
-     * @throws IOException if the file could not be opened
-     * @since 15.04.03
-     */
-    public GLImage2D(
-            final int width, final int height,
-            final RandomAccessFile data, final MapMode mode) throws IOException {
-
-        this.size = new int[]{width, height};
-        this.data = data.getChannel().map(mode, 0, width * height * 4);
-        this.resource = Optional.of(data);
+        
+        final IntBuffer px = data.asIntBuffer();
+        
+        while(px.hasRemaining()) {
+            if ((px.get() & 0x000000FF) != 0) {
+                
+            }
+        }
     }
 
     /**
@@ -242,7 +223,7 @@ public class GLImage2D implements Closeable {
         int off = 0;
 
         for (int yStart = 0; yStart < h; yStart++) {
-            dst.position(yOff);
+            dst.position(yOff);            
             dst.put(data, off, w);
             off += w;
             yOff += scanlineSize;
@@ -398,11 +379,7 @@ public class GLImage2D implements Closeable {
         final int[] tmp;
         final int scanlineSize = dstW;
 
-        if (TEMP == null || TEMP.length < scanlineSize) {
-            TEMP = new int[scanlineSize];
-        }
-
-        tmp = TEMP;
+        tmp = new int[scanlineSize];
 
         for (int yStart = 0; yStart < dstH; yStart++) {
             int destOff = indexOf(dstX, dstY + yStart);
@@ -512,14 +489,6 @@ public class GLImage2D implements Closeable {
         this.data.reset();
         
         return img;
-    }
-
-    @Override
-    public void close() throws IOException {
-        if(this.resource.isPresent()) {
-            this.resource.get().close();
-            this.resource = Optional.empty();
-        }
     }
 
     @Override
