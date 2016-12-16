@@ -148,6 +148,25 @@ public final class GLFontGlyphSet implements Iterable<Character> {
 
     /**
      * Constructs a new GLFontGlyphSet that will include all of the characters
+     * in the CharSequence.
+     *
+     * @param chars the String of characters to include
+     * @return the new GLFontGlyphSet.
+     * @since 16.12.16
+     */
+    public GLFontGlyphSet withCharacters(final CharSequence chars) {
+        final Set<Character> newSupported = new HashSet<>(this.supported);
+        final char[] cArr = chars.toString().toCharArray();
+
+        for (int i = 0; i < cArr.length; i++) {
+            newSupported.add(cArr[i]);
+        }
+
+        return new GLFontGlyphSet(newSupported);
+    }
+
+    /**
+     * Constructs a new GLFontGlyphSet that will include all of the characters
      * in the sequence.
      *
      * @param chars the characters to add to the GLFontGlyphSet.
