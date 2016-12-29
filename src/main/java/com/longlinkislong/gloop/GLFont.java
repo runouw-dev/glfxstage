@@ -43,9 +43,10 @@ public abstract class GLFont extends GLObject {
      * in the init function when needed since it may be deleted by
      * GLFont.delete.
      *
+     * @return the texture.
      * @since 15.06.11
-     */
-    protected GLTexture texture;
+     */    
+    protected abstract GLTexture getTexture();
 
     /**
      * Constructs a new GLFont object on the default OpenGL thread.
@@ -75,8 +76,7 @@ public abstract class GLFont extends GLObject {
      */
     public GLFont(final GLThread thread, final GLFontGlyphSet supportedGlyphs) {
         super(thread);
-        
-        this.texture = new GLTexture(thread);
+                
         this.supportedGlyphs = Objects.requireNonNull(supportedGlyphs);
     }
 
@@ -86,7 +86,7 @@ public abstract class GLFont extends GLObject {
      * @param params the
      */
     public void setParameters(final GLTextureParameters params) {
-        this.texture.setAttributes(params);
+        getTexture().setAttributes(params);
     }    
 
     /**
@@ -107,7 +107,7 @@ public abstract class GLFont extends GLObject {
      * @since 15.06.12
      */
     public GLTask newBindTask(final int target) {
-        return this.texture.new BindTask(target);
+        return this.getTexture().new BindTask(target);
     }       
 
     /**
@@ -126,7 +126,7 @@ public abstract class GLFont extends GLObject {
      * @since 15.06.12
      */
     public GLTask newDeleteTask() {
-        return this.texture.new DeleteTask();
+        return this.getTexture().new DeleteTask();
     }    
 
     /**

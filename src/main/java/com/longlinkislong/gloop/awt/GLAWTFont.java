@@ -30,6 +30,10 @@ import com.longlinkislong.gloop.GLFont;
 import com.longlinkislong.gloop.GLFontGlyphSet;
 import com.longlinkislong.gloop.GLFontMetrics;
 import com.longlinkislong.gloop.GLTask;
+import com.longlinkislong.gloop.GLTexture;
+import com.longlinkislong.gloop.GLTexture.AllocateImage2DTask;
+import com.longlinkislong.gloop.GLTexture.SetAttributesTask;
+import com.longlinkislong.gloop.GLTexture.UpdateImage2DTask;
 import static com.longlinkislong.gloop.GLTextureFormat.GL_BGRA;
 import com.longlinkislong.gloop.GLTextureInternalFormat;
 import com.longlinkislong.gloop.GLTextureMagFilter;
@@ -68,6 +72,7 @@ public class GLAWTFont extends GLFont {
 
     private static final boolean FONT_TO_FILE = System.getProperty("com.longlinkislong.gloop.GLFont.fontToFile", "0").equals("1");
 
+    private final GLTexture texture;
     private int texWidth;
     private int texHeight;
     private final Font font;
@@ -93,10 +98,7 @@ public class GLAWTFont extends GLFont {
      * @since 15.06.11
      */
     public GLAWTFont(final GLThread thread, final Font font) {
-        super(thread, GLFontGlyphSet.ASCII);
-
-        this.font = Objects.requireNonNull(font);
-        this.init();
+        this(thread, font, GLFontGlyphSet.ASCII);
     }
 
     /**
@@ -123,6 +125,7 @@ public class GLAWTFont extends GLFont {
     public GLAWTFont(final GLThread thread, final Font font, final GLFontGlyphSet supportedGlyphs) {
         super(thread, supportedGlyphs);
 
+        this.texture = new GLTexture(thread);
         this.font = Objects.requireNonNull(font);
         this.init();
     }
@@ -224,7 +227,7 @@ public class GLAWTFont extends GLFont {
 
         img.getRGB(0, 0, texWidth, texHeight, pixels, 0, texWidth);        
         Arrays.stream(pixels).forEach(pBuf::putInt);
-        pBuf.flip();        
+        pBuf.flip();                       
 
         return GLTask.join(
                 this.texture.new AllocateImage2DTask(1, GLTextureInternalFormat.GL_RGBA8, texWidth, texHeight, GLType.GL_UNSIGNED_BYTE),
@@ -276,5 +279,10 @@ public class GLAWTFont extends GLFont {
         int hash = 7;
         hash = 97 * hash + Objects.hashCode(this.font);
         return hash;
+    }
+
+    @Override
+    protected GLTexture getTexture() {
+        return this.texture;
     }
 }
