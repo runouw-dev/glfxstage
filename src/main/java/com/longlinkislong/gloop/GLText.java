@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
  * @author zmichaels
  * @since 15.06.11
  */
+@Deprecated
 public class GLText extends GLObject implements CharSequence {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GLText.class);

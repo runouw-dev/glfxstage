@@ -43,6 +43,7 @@ import java.util.Objects;
  * @author zmichaels
  * @since 15.02.02
  */
+@Deprecated
 public class GLImage2D {
     
     protected final ByteBuffer data;
