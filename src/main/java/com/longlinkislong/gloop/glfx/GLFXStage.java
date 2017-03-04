@@ -675,8 +675,9 @@ public class GLFXStage extends GLObject {
                     this.tBuffer = MemoryUtil.memAlloc(neededSize);
                 }
 
-                this.tBuffer.rewind();
+                this.tBuffer.clear();
                 this.emScene.getPixels(this.tBuffer.asIntBuffer(), this.width, this.height);
+                this.tBuffer.limit(neededSize);
             } else {
                 LOGGER.trace("Request to read 0 bytes ignored.");
             }
