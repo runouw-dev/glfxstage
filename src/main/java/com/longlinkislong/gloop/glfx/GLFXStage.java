@@ -26,6 +26,7 @@
 package com.longlinkislong.gloop.glfx;
 
 import com.longlinkislong.gloop.GLBuffer;
+import com.longlinkislong.gloop.GLBufferUsage;
 import com.longlinkislong.gloop.GLDrawMode;
 import com.longlinkislong.gloop.GLException;
 import com.longlinkislong.gloop.GLFramebufferResizeListener;
@@ -231,6 +232,7 @@ public class GLFXStage extends GLObject {
         final GLBuffer verts = new GLBuffer();
 
         verts.setName("GLFX3DStage.verts");
+        verts.allocate(2 * 4 * Float.BYTES, GLBufferUsage.GL_STATIC_DRAW);
         verts.upload(GLTools.wrapFloat(
                 0, 0f,
                 0, 1f,
@@ -244,6 +246,7 @@ public class GLFXStage extends GLObject {
         final GLBuffer texCoord = new GLBuffer();
 
         texCoord.setName("GLFX3DStage.vUVs");
+        texCoord.allocate(2 * 4 * Float.BYTES, GLBufferUsage.GL_STATIC_DRAW);
         texCoord.upload(GLTools.wrapFloat(
                 0f, 0f,
                 0f, 1f,
