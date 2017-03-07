@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.lwjgl.system.MemoryUtil;
 
 /**
@@ -244,8 +245,8 @@ public final class TextureUtils {
         t.setDaemon(true);
         t.setName("TextureUtils - Worker Thread");
         return t;
-    });    
-    
+    });
+
     public static Future<GLTexture> newTextureAsync(final GLThread thread, final GLTextureParameters params, final BufferedImage img) {
         final GLTexture out = new GLTexture(thread);
         final int width = img.getWidth();
@@ -253,29 +254,30 @@ public final class TextureUtils {
         final int pixelCount = width * height;
         final int bytesNeeded = pixelCount * Integer.BYTES;
         final GLBuffer pbo = new GLBuffer(thread);
-        
+
         out.allocate(1, GLTextureInternalFormat.GL_RGBA8, width, height);
         pbo.allocate(bytesNeeded, GLBufferUsage.GL_STREAM_DRAW);
-        
+
         final ByteBuffer data = pbo.map(0, bytesNeeded, GLBufferAccess.GL_MAP_WRITE, GLBufferAccess.GL_MAP_INVALIDATE_BUFFER);
         final Future<?> uploadTask = WORKERS.submit(() -> {
             final int[] pixels = new int[pixelCount];
-            
+
             img.getRGB(0, 0, width, height, pixels, 0, width);
             data.asIntBuffer().put(pixels);
             data.position(0).limit(bytesNeeded);
         });
-        
+
         return new Future<GLTexture>() {
             @Override
             public boolean cancel(boolean mayInterruptIfRunning) {
-                final boolean res = uploadTask.cancel(mayInterruptIfRunning);
-                
-                pbo.unmap();
-                pbo.delete();
-                out.delete();
-                
-                return res;
+                if (uploadTask.cancel(mayInterruptIfRunning)) {
+                    pbo.unmap();
+                    pbo.delete();
+                    out.delete();
+                    return true;
+                }
+
+                return false;
             }
 
             @Override
@@ -288,24 +290,30 @@ public final class TextureUtils {
                 return uploadTask.isDone();
             }
 
+            private final AtomicBoolean got = new AtomicBoolean(false);
+
             @Override
             public GLTexture get() throws InterruptedException, ExecutionException {
                 // sync with upload thread
-                uploadTask.get();
-                pbo.unmap();
-                out.updateImage(0, 0, 0, width, height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, pbo);
-                pbo.delete();
-                
+                if (got.getAndSet(true)) {
+                    uploadTask.get();
+                    pbo.unmap();
+                    out.updateImage(0, 0, 0, width, height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, pbo);
+                    pbo.delete();
+                }
+
                 return out;
             }
 
             @Override
             public GLTexture get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-                uploadTask.get(timeout, unit);
-                pbo.unmap();
-                out.updateImage(0, 0, 0, width, height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, pbo);
-                pbo.delete();
-                
+                if (got.getAndSet(true)) {
+                    uploadTask.get(timeout, unit);
+                    pbo.unmap();
+                    out.updateImage(0, 0, 0, width, height, GLTextureFormat.GL_BGRA, GLType.GL_UNSIGNED_BYTE, pbo);
+                    pbo.delete();
+                }
+
                 return out;
             }
         };
