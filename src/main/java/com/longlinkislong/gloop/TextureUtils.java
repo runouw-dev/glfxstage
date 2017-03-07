@@ -28,13 +28,10 @@ package com.longlinkislong.gloop;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.lwjgl.system.MemoryUtil;
@@ -211,13 +208,15 @@ public final class TextureUtils {
     public static GLTexture newTexture(final GLThread thread, final BufferedImage img, final GLTextureParameters params) {
         final int width = img.getWidth();
         final int height = img.getHeight();
-        final int[] pixels = new int[width * height];
-        final ByteBuffer data = MemoryUtil.memAlloc(pixels.length * Integer.BYTES);
+        final int pixelCount = width * height;
+        final int bytesNeeded = pixelCount * Integer.BYTES;
+        final int[] pixels = new int[pixelCount];
+        final ByteBuffer data = MemoryUtil.memAlloc(bytesNeeded);
 
         img.getRGB(0, 0, width, height, pixels, 0, width);
 
-        Arrays.stream(pixels).forEach(data::putInt);
-        data.flip();
+        data.asIntBuffer().put(pixels);
+        data.position(0).limit(bytesNeeded);
 
         final GLTexture out;
         if (needsMipmaps(params)) {
